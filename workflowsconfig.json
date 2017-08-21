@@ -1,0 +1,267 @@
+{
+    "messages": {
+        "default": {
+            "text": [
+                ":)"
+            ]
+        },
+        "arguments": {
+            "text": [
+                "Ok! Antes precisamos saber de mais algumas informações."
+            ]
+        },
+        "id_escola": {
+            "text": [
+                "Digite o nome da escola, ou nos mande sua localização através do \"clip\" abaixo."
+            ],
+            "options": [
+                "SME CONV. ADEFAV - ASSOCIAÇÃO PARA DEFICIENTES DA AUDIO VISÃO",
+                "EMEI FERNANDO DE AZEVEDO",
+                "CEI MUN. VL. PRAIA",
+                "EMEF DR. AFRÂNIO DE MELLO FRANCO"
+            ],
+            "configurable": true
+        },
+        "id_escola_followup": {
+            "text": [
+                "Desculpe, não encontrei a escola digitada.",
+                "Por acaso, são alguns destas abaixo?"
+            ]
+        },
+        "idade": {
+            "text": [
+                "Ok! Por favor, escolha a idade."
+            ],
+            "options": ["0 a 5 meses", "6 meses", "7 meses", "8 a 11 meses", "1 ano a 1 ano e 11 meses", "2 a 6 anos"],
+            "configurable": true
+        },
+        "data": {
+            "text": [
+                "Ótimo, só falta me dizer para que dia."
+            ],
+            "options": ["Hoje", "Amanhã", "Esta semana", "Próxima semana"]
+        },
+        "nota": {
+            "text": [
+                "Como você avalia a refeição?"
+            ],
+            "options": [
+                "Ruim", "Normal", "Gostoso", "Muito gostoso"
+            ]
+        },
+        "comentario": {
+            "text": [
+                "Gostaria de fazer um comentário sobre a refeição?"
+            ],
+            "options": [
+                "Sim", "Não"
+            ]
+        }
+    },
+    "flows": {
+        "/start": {
+            "reply": [
+                "Olá!",
+                "Eu sou o EducAssis, assitente virtual da Secretaria Municipal de Educação de São Paulo!",
+                "Veja nos botões abaixo como posso te ajudar :)"
+            ],
+            "button": false
+        },
+        "Qual o cardápio?": {
+            "flow_id": "cardapio",
+            "arguments": ["id_escola", "idade", "data"],
+            "reply": [
+                "{}",
+                "{}"
+            ],
+            "button": true,
+            "order": 0
+
+        },
+        "Avaliar refeição": {
+            "flow_id": "avaliacao",
+            "arguments": ["id_escola", "idade", "data", "nota", "comentario"],
+            "reply": [
+                "Obrigado pela sua avaliação!"
+            ],
+            "button": true,
+            "order": 1
+        },
+        "Receber notificações": {
+            "flow_id": "notificacao",
+            "arguments": ["id_escola", "idade"],
+            "reply": [
+                "Pode deixar! Te avisarei diariamente qual o cardápio ;)"
+            ],
+            "button": true,
+            "order": 2
+        },
+        "Opções": {
+            "arguments": ["configurar_escola", "configurar_idade", "cancelar_notificacao", "voltar"],
+            "button": false,
+            "order": 3
+        }
+    },
+    "cardapio": {
+        "SME CONV. ADEFAV - ASSOCIAÇÃO PARA DEFICIENTES DA AUDIO VISÃO": {
+            "0 a 5 meses": [
+                "DESJEJUM, ALMOÇO, LANCHE e REFEIÇÃO DA TARDE:",
+                "Mamadeira preparada com Fórmula Láctea Infantil (1º Semestre)"
+            ],
+            "6 meses": [
+                "DESJEJUM: Mamadeira preparada com Fórmula Láctea Infantil (2º Semestre)",
+                "COLAÇÃO: Papa de Fruta ",
+                "ALMOÇO: Papa Principal conforme composição abaixo + Sobremesa (Papa de Fruta ou Suco) - Macarrão, Feculento, Legume Fonte de Vitamina A, Legume, Fonte de Proteína e Suco de Fruta",
+                "LANCHE: Mamadeira preparada com Fórmula Láctea Infantil (2º Semestre)",
+                "REFEIÇÃO DA TARDE: Mamadeira preparada com Fórmula Láctea Infantil (2º semestre) + Papa de Fruta"
+            ],
+            "7 meses": [
+                "DESJEJUM: - Mamadeira preparada com Fórmula Láctea Infantil (2º Semestre)",
+                "COLAÇÃO: - Papa de Fruta",
+                "ALMOÇO: - Papa Principal conforme composição abaixo + Sobremesa (Papa de Fruta ou Suco) - Macarrão, Feculento, Legume Fonte de Vitamina A, Legume, Fonte de Proteína e Suco de Fruta sem açúcar",
+                "LANCHE: Mamadeira preparada com Fórmula Láctea Infantil (2º Semestre)",
+                "REFEIÇÃO DA TARDE: - Papa Principal conforme composição abaixo + Sobremesa (Papa de Fruta) - Arroz, Feculento, Legume Fonte de Vitamina A, Legume, Ovo e Papa de Fruta"
+            ],
+            "8 a 11 meses": [
+                "DESJEJUM: Mamadeira preparada com Fórmula Láctea Infantil (2º Semestre) + os seguintes acompanhamentos -  Pão Bisnaguinha ou Biscoito",
+                "COLAÇÃO: Fruta",
+                "ALMOÇO: - Refeição conforme composição abaixo + Sobremesa (Fruta ou Suco): Arroz, Feijão, Ovo, Legume e Suco de Fruta sem Açúcar.",
+                "LANCHE:  - Mamadeira preparada com Fórmula Láctea Infantil (2º Semestre).",
+                "REFEIÇÃO DA TARDE: Risoto ou Sopa conforme composição abaixo + Sobremesa (Fruta): Arroz, Feculento, Legume Fonte de Vitamina A, Legume, Fonte de Proteína e Fruta"
+            ],
+            "1 ano a 1 ano e 11 meses": [
+                "DESJEJUM: - Bebida + Acompanhamento - Leite Integral e Pão Bisnaguinha",
+                "COLAÇÃO:  - Fruta",
+                "ALMOÇO: - Refeição conforme composição abaixo + Sobremesa (Fruta ou Suco):  Arroz, Feijão, Ovo, Legume e Suco de Fruta sem Açúcar.",
+                "LANCHE - Bebida: Leite Integral",
+                "REFEIÇÃO DA TARDE - Risoto ou Sopa conforme composição abaixo + Sobremesa (Fruta): (Risoto) Arroz, Feculento, Legume Fonte de Vitamina A, Legume, Fonte de Proteína e Fruta"
+            ],
+            "2 a 6 anos": [
+                "DESJEJUM: Bebida + Acompanhamento: Composto Lácteo e Pão Bisnaguinha COLAÇÃO: - Fruta",
+                "ALMOÇO: - Refeição conforme composição abaixo + Sobremesa (Fruta ou Suco): Arroz, Feijão, Ovo, Legume e Suco de Fruta sem Açúcar.",
+                "LANCHE - Bebida: Composto Lácteo",
+                "REFEIÇÃO DA TARDE - Risoto ou Sopa conforme composição abaixo + Sobremesa (Fruta): (Risoto): Arroz, Feculento, Legume Fonte de Vitamina A, Legume, Fonte de Proteína e Fruta"
+            ]
+        },
+    "EMEI FERNANDO DE AZEVEDO": {
+            "0 a 5 meses": [
+                "DESJEJUM, ALMOÇO, LANCHE e REFEIÇÃO DA TARDE:",
+                "Mamadeira preparada com Fórmula Láctea Infantil (1º Semestre)"
+            ],
+            "6 meses": [
+                "DESJEJUM: Mamadeira preparada com Fórmula Láctea Infantil (2º Semestre)",
+                "COLAÇÃO: Papa de Fruta ",
+                "ALMOÇO: Papa Principal conforme composição abaixo + Sobremesa (Papa de Fruta ou Suco) - Macarrão, Feculento, Legume Fonte de Vitamina A, Legume, Fonte de Proteína e Suco de Fruta",
+                "LANCHE: Mamadeira preparada com Fórmula Láctea Infantil (2º Semestre)",
+                "REFEIÇÃO DA TARDE: Mamadeira preparada com Fórmula Láctea Infantil (2º semestre) + Papa de Fruta"
+            ],
+            "7 meses": [
+                "DESJEJUM: - Mamadeira preparada com Fórmula Láctea Infantil (2º Semestre)",
+                "COLAÇÃO: - Papa de Fruta",
+                "ALMOÇO: - Papa Principal conforme composição abaixo + Sobremesa (Papa de Fruta ou Suco) - Macarrão, Feculento, Legume Fonte de Vitamina A, Legume, Fonte de Proteína e Suco de Fruta sem açúcar",
+                "LANCHE: Mamadeira preparada com Fórmula Láctea Infantil (2º Semestre)",
+                "REFEIÇÃO DA TARDE: - Papa Principal conforme composição abaixo + Sobremesa (Papa de Fruta) - Arroz, Feculento, Legume Fonte de Vitamina A, Legume, Ovo e Papa de Fruta"
+            ],
+            "8 a 11 meses": [
+                "DESJEJUM: Mamadeira preparada com Fórmula Láctea Infantil (2º Semestre) + os seguintes acompanhamentos -  Pão Bisnaguinha ou Biscoito",
+                "COLAÇÃO: Fruta",
+                "ALMOÇO: - Refeição conforme composição abaixo + Sobremesa (Fruta ou Suco): Arroz, Feijão, Ovo, Legume e Suco de Fruta sem Açúcar.",
+                "LANCHE:  - Mamadeira preparada com Fórmula Láctea Infantil (2º Semestre).",
+                "REFEIÇÃO DA TARDE: Risoto ou Sopa conforme composição abaixo + Sobremesa (Fruta): Arroz, Feculento, Legume Fonte de Vitamina A, Legume, Fonte de Proteína e Fruta"
+            ],
+            "1 ano a 1 ano e 11 meses": [
+                "DESJEJUM: - Bebida + Acompanhamento - Leite Integral e Pão Bisnaguinha",
+                "COLAÇÃO:  - Fruta",
+                "ALMOÇO: - Refeição conforme composição abaixo + Sobremesa (Fruta ou Suco):  Arroz, Feijão, Ovo, Legume e Suco de Fruta sem Açúcar.",
+                "LANCHE - Bebida: Leite Integral",
+                "REFEIÇÃO DA TARDE - Risoto ou Sopa conforme composição abaixo + Sobremesa (Fruta): (Risoto) Arroz, Feculento, Legume Fonte de Vitamina A, Legume, Fonte de Proteína e Fruta"
+            ],
+            "2 a 6 anos": [
+                "DESJEJUM: Bebida + Acompanhamento: Composto Lácteo e Pão Bisnaguinha COLAÇÃO: - Fruta",
+                "ALMOÇO: - Refeição conforme composição abaixo + Sobremesa (Fruta ou Suco): Arroz, Feijão, Ovo, Legume e Suco de Fruta sem Açúcar.",
+                "LANCHE - Bebida: Composto Lácteo",
+                "REFEIÇÃO DA TARDE - Risoto ou Sopa conforme composição abaixo + Sobremesa (Fruta): (Risoto): Arroz, Feculento, Legume Fonte de Vitamina A, Legume, Fonte de Proteína e Fruta"
+            ]
+        },
+        "CEI MUN. VL. PRAIA":  {
+            "0 a 5 meses": [
+                "DESJEJUM, ALMOÇO, LANCHE e REFEIÇÃO DA TARDE - Mamadeira preparada com Fórmula Láctea Infantil (1º Semestre)"
+            ],
+            "6 meses": [
+                "DESJEJUM: Mamadeira preparada com Fórmula Láctea Infantil (2º Semestre)",
+                "COLAÇÃO: Papa de Fruta ",
+                "ALMOÇO: Papa Principal conforme composição abaixo + Sobremesa (Papa de Fruta ou Suco) - Macarrão, Feculento, Legume Fonte de Vitamina A, Legume, Fonte de Proteína e Suco de Fruta",
+                "LANCHE: Mamadeira preparada com Fórmula Láctea Infantil (2º Semestre)",
+                "REFEIÇÃO DA TARDE: Mamadeira preparada com Fórmula Láctea Infantil (2º semestre) + Papa de Fruta"
+            ],
+            "7 meses": [
+                "DESJEJUM: - Mamadeira preparada com Fórmula Láctea Infantil (2º Semestre)",
+                "COLAÇÃO: - Papa de Fruta",
+                "ALMOÇO: - Papa Principal conforme composição abaixo + Sobremesa (Papa de Fruta ou Suco) - Macarrão, Feculento, Legume Fonte de Vitamina A, Legume, Fonte de Proteína e Suco de Fruta sem açúcar",
+                "LANCHE: Mamadeira preparada com Fórmula Láctea Infantil (2º Semestre)",
+                "REFEIÇÃO DA TARDE: - Papa Principal conforme composição abaixo + Sobremesa (Papa de Fruta) - Arroz, Feculento, Legume Fonte de Vitamina A, Legume, Ovo e Papa de Fruta"
+            ],
+            "8 a 11 meses": [
+                "DESJEJUM: Mamadeira preparada com Fórmula Láctea Infantil (2º Semestre) + os seguintes acompanhamentos -  Pão Bisnaguinha ou Biscoito",
+                "COLAÇÃO: Fruta",
+                "ALMOÇO: - Refeição conforme composição abaixo + Sobremesa (Fruta ou Suco): Arroz, Feijão, Ovo, Legume e Suco de Fruta sem Açúcar.",
+                "LANCHE:  - Mamadeira preparada com Fórmula Láctea Infantil (2º Semestre).",
+                "REFEIÇÃO DA TARDE: Risoto ou Sopa conforme composição abaixo + Sobremesa (Fruta): Arroz, Feculento, Legume Fonte de Vitamina A, Legume, Fonte de Proteína e Fruta"
+            ],
+            "1 ano a 1 ano e 11 meses": [
+                "DESJEJUM: - Bebida + Acompanhamento - Leite Integral e Pão Bisnaguinha",
+                "COLAÇÃO:  - Fruta",
+                "ALMOÇO: - Refeição conforme composição abaixo + Sobremesa (Fruta ou Suco):  Arroz, Feijão, Ovo, Legume e Suco de Fruta sem Açúcar.",
+                "LANCHE - Bebida: Leite Integral",
+                "REFEIÇÃO DA TARDE - Risoto ou Sopa conforme composição abaixo + Sobremesa (Fruta): (Risoto) Arroz, Feculento, Legume Fonte de Vitamina A, Legume, Fonte de Proteína e Fruta"
+            ],
+            "2 a 6 anos": [
+                "DESJEJUM: Bebida + Acompanhamento: Composto Lácteo e Pão Bisnaguinha COLAÇÃO: - Fruta",
+                "ALMOÇO: - Refeição conforme composição abaixo + Sobremesa (Fruta ou Suco): Arroz, Feijão, Ovo, Legume e Suco de Fruta sem Açúcar.",
+                "LANCHE - Bebida: Composto Lácteo",
+                "REFEIÇÃO DA TARDE - Risoto ou Sopa conforme composição abaixo + Sobremesa (Fruta): (Risoto): Arroz, Feculento, Legume Fonte de Vitamina A, Legume, Fonte de Proteína e Fruta"
+            ]
+        },
+        "EMEF DR. AFRÂNIO DE MELLO FRANCO": {
+            "0 a 5 meses": [
+                "DESJEJUM, ALMOÇO, LANCHE e REFEIÇÃO DA TARDE:",
+                "Mamadeira preparada com Fórmula Láctea Infantil (1º Semestre)"
+            ],
+            "6 meses": [
+                "DESJEJUM: Mamadeira preparada com Fórmula Láctea Infantil (2º Semestre)",
+                "COLAÇÃO: Papa de Fruta ",
+                "ALMOÇO: Papa Principal conforme composição abaixo + Sobremesa (Papa de Fruta ou Suco) - Macarrão, Feculento, Legume Fonte de Vitamina A, Legume, Fonte de Proteína e Suco de Fruta",
+                "LANCHE: Mamadeira preparada com Fórmula Láctea Infantil (2º Semestre)",
+                "REFEIÇÃO DA TARDE: Mamadeira preparada com Fórmula Láctea Infantil (2º semestre) + Papa de Fruta"
+            ],
+            "7 meses": [
+                "DESJEJUM: - Mamadeira preparada com Fórmula Láctea Infantil (2º Semestre)",
+                "COLAÇÃO: - Papa de Fruta",
+                "ALMOÇO: - Papa Principal conforme composição abaixo + Sobremesa (Papa de Fruta ou Suco) - Macarrão, Feculento, Legume Fonte de Vitamina A, Legume, Fonte de Proteína e Suco de Fruta sem açúcar",
+                "LANCHE: Mamadeira preparada com Fórmula Láctea Infantil (2º Semestre)",
+                "REFEIÇÃO DA TARDE: - Papa Principal conforme composição abaixo + Sobremesa (Papa de Fruta) - Arroz, Feculento, Legume Fonte de Vitamina A, Legume, Ovo e Papa de Fruta"
+            ],
+            "8 a 11 meses": [
+                "DESJEJUM: Mamadeira preparada com Fórmula Láctea Infantil (2º Semestre) + os seguintes acompanhamentos -  Pão Bisnaguinha ou Biscoito",
+                "COLAÇÃO: Fruta",
+                "ALMOÇO: - Refeição conforme composição abaixo + Sobremesa (Fruta ou Suco): Arroz, Feijão, Ovo, Legume e Suco de Fruta sem Açúcar.",
+                "LANCHE:  - Mamadeira preparada com Fórmula Láctea Infantil (2º Semestre).",
+                "REFEIÇÃO DA TARDE: Risoto ou Sopa conforme composição abaixo + Sobremesa (Fruta): Arroz, Feculento, Legume Fonte de Vitamina A, Legume, Fonte de Proteína e Fruta"
+            ],
+            "1 ano a 1 ano e 11 meses": [
+                "DESJEJUM: - Bebida + Acompanhamento - Leite Integral e Pão Bisnaguinha",
+                "COLAÇÃO:  - Fruta",
+                "ALMOÇO: - Refeição conforme composição abaixo + Sobremesa (Fruta ou Suco):  Arroz, Feijão, Ovo, Legume e Suco de Fruta sem Açúcar.",
+                "LANCHE - Bebida: Leite Integral",
+                "REFEIÇÃO DA TARDE - Risoto ou Sopa conforme composição abaixo + Sobremesa (Fruta): (Risoto) Arroz, Feculento, Legume Fonte de Vitamina A, Legume, Fonte de Proteína e Fruta"
+            ],
+            "2 a 6 anos": [
+                "DESJEJUM: Bebida + Acompanhamento: Composto Lácteo e Pão Bisnaguinha COLAÇÃO: - Fruta",
+                "ALMOÇO: - Refeição conforme composição abaixo + Sobremesa (Fruta ou Suco): Arroz, Feijão, Ovo, Legume e Suco de Fruta sem Açúcar.",
+                "LANCHE - Bebida: Composto Lácteo",
+                "REFEIÇÃO DA TARDE - Risoto ou Sopa conforme composição abaixo + Sobremesa (Fruta): (Risoto): Arroz, Feculento, Legume Fonte de Vitamina A, Legume, Fonte de Proteína e Fruta"
+            ]
+        }
+    }
+}
+
