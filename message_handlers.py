@@ -34,7 +34,7 @@ def _telegram_dispatch(chat_id, text, keyboard=None):
 
     logger.debug('telegram dispatch:')
     logger.debug(url)
-    logger.debug('return:', r.status_code, r.text)
+    logger.debug('return: {}-{}'.format(r.status_code, r.text))
 
 
 # Facebook
