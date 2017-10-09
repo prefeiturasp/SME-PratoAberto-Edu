@@ -1,0 +1,122 @@
+{
+    "mensagens": {
+        "default": {
+            "texto": [
+                ":)"
+            ]
+        },
+        "argumentos": {
+            "texto": [
+                "Ok! Antes precisamos saber de mais algumas informações."
+            ]
+        },
+        "escola": {
+            "texto": [
+                "Por favor, digite o nome da escola."
+            ]
+        },
+        "escola_nenhuma_opcao": {
+            "texto": [
+                "Ops! Não encontrei nenhuma escola com esta busca.",
+                "Por favor, tente novamente."
+            ]
+        },
+        "escola_confirm": {
+            "texto": [
+                "Estas são as escolas mais parecidas que encontrei com o termo procurado.",
+                "Por acaso, são alguns destas abaixo?"
+            ]
+        },
+        "idade": {
+            "texto": [
+                "Ok! Por favor, escolha a idade."
+            ]
+        },
+        "data_cardapio": {
+            "texto": [
+                "Ótimo, só falta me dizer para que dia."
+            ],
+            "opcoes": ["Hoje", "Amanhã"]
+        },
+        "data_avaliacao": {
+            "texto": [
+                "Ótimo, só falta me dizer para que dia."
+            ],
+            "opcoes": ["Hoje", "Ontem"]
+        },
+        "data_outrodia": {
+            "texto": [
+                "Tudo bem! Me informe a data. (Por exemplo: 23/01/2017)"
+            ]
+        },
+        "nota": {
+            "texto": [
+                "Como você avalia a refeição?"
+            ],
+            "opcoes": [
+                "Ruim", "Normal", "Gostoso", "Muito gostoso"
+            ]
+        },
+        "comentario_confirm": {
+            "texto": [
+                "Gostaria de fazer um comentário sobre a refeição?"
+            ],
+            "opcoes": [
+                "Sim", "Não"
+            ]
+        },
+        "comentario": {
+            "texto": [
+                "Ok! Fique à vontade para fazer seu comentário.",
+                "Sua mensagem será considerada pela Coordenaria da SME, mas lembre-se que para denúncias, por favor, ligue no 156!"
+            ]
+        }
+    },
+    "fluxos": {
+        "/start": {
+            "resposta": [
+                "Olá!",
+                "Eu sou o EducAssis, assitente virtual da Secretaria Municipal de Educação de São Paulo!",
+                "Veja nos botões abaixo como posso te ajudar :)"
+            ],
+            "menu": false
+        },
+        "default": {
+            "resposta": [
+                "Ops, não entendi sua mensagem. :(",
+                "Use os botões abaixo para podermos conversar!"
+            ],
+            "menu": false
+        },
+        "Qual o cardápio?": {
+            "_id_fluxo": "cardapio",
+            "argumentos": ["escola", "idade", "data_cardapio"],
+            "resposta": [
+                "{}",
+                "Idade: {}",
+                "{}"
+            ],
+            "menu": true,
+            "ordem": 0
+
+        },
+        "Avaliar refeição": {
+            "_id_fluxo": "avaliacao",
+            "argumentos": ["escola", "idade", "data_avaliacao", "nota", "comentario_confirm"],
+            "resposta": [
+                "Obrigado pela sua avaliação!"
+            ],
+            "menu": true,
+            "ordem": 1
+        },
+        "Receber notificações": {
+            "_id_fluxo": "notificacao",
+            "argumentos": ["escola", "idade"],
+            "resposta": [
+                "Pode deixar! Te avisarei diariamente qual o cardápio ;)"
+            ],
+            "menu": true,
+            "ordem": 2
+        }
+    }
+}
