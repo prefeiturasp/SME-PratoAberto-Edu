@@ -12,7 +12,7 @@
         },
         "escola": {
             "texto": [
-                "Por favor, digite o nome da escola."
+                "Por favor, digite para mim o nome da escola."
             ]
         },
         "escola_nenhuma_opcao": {
@@ -23,18 +23,19 @@
         },
         "escola_confirm": {
             "texto": [
-                "Estas são as escolas mais parecidas que encontrei com o termo procurado.",
-                "Por acaso, são alguns destas abaixo?"
+                "As escolas com os nomes mais parecidos com o que você digitou são essas aqui.",
+                "Dá uma olhada no que encontrei e se uma delas for a que você procura, clique no nome que eu vou buscar o cardápio para você."
             ]
         },
         "idade": {
             "texto": [
-                "Ok! Por favor, escolha a idade."
+                "Legal ;) Agora me conta a idade?"
             ]
         },
         "data_cardapio": {
             "texto": [
-                "Ótimo, só falta me dizer para que dia."
+                "Eu já tenho algumas listas de refeições comigo.",
+                "Agora é só você me falar qual cardápio está procurando, tá bom?"
             ],
             "opcoes": ["Hoje", "Amanhã"]
         },
@@ -49,17 +50,44 @@
                 "Tudo bem! Me informe a data. (Por exemplo: 23/01/2017)"
             ]
         },
-        "nota": {
+        "nota1": {
             "texto": [
-                "Como você avalia a refeição?"
+                "Você gostou da comida?"
             ],
             "opcoes": [
-                "Ruim", "Normal", "Gostoso", "Muito gostoso"
+                "Sim", "Não"
+            ]
+        },
+        "nota2": {
+            "texto": [
+                "Você se sentiu satisfeito depois da refeição?"
+            ],
+            "opcoes": [
+                "Sim", "Não"
+            ]
+        },
+        "nota3": {
+            "texto": [
+                "O que você achou dessa refeição?"
+            ],
+            "opcoes": [
+                "Sem gosto", "Normal", "Gostoso", "Muito Gostoso"
+            ]
+        },
+        "nota4": {
+            "texto": [
+                "Qual a refeição do cardápio que você mais gostou?"
+            ],
+            "opcoes": [
+                "Café da manhã", "Almoço", "Colação", "Jantar"
             ]
         },
         "comentario_confirm": {
             "texto": [
-                "Gostaria de fazer um comentário sobre a refeição?"
+                "Quer deixar alguma sugestão ou elogio?",
+                "Vou adorar saber o que você pensa e pode ficar tranquilo que vou enviar tudo o que você disser para o responsável.",
+                "Continue ligado nas refeições da sua escola, por favor. Assim você ajuda a gente a melhorar sempre.",
+                "Ah, não se esqueça: se você tiver uma emergência ou denúncia, entre em contato através do 156."
             ],
             "opcoes": [
                 "Sim", "Não"
@@ -67,17 +95,14 @@
         },
         "comentario": {
             "texto": [
-                "Ok! Fique à vontade para fazer seu comentário.",
-                "Sua mensagem será considerada pela Coordenaria da SME, mas lembre-se que para denúncias, por favor, ligue no 156!"
+                "Ok! Só deixar seu comentário."
             ]
         }
     },
     "fluxos": {
         "/start": {
             "resposta": [
-                "Olá!",
-                "Eu sou o EducAssis, assitente virtual da Secretaria Municipal de Educação de São Paulo!",
-                "Veja nos botões abaixo como posso te ajudar :)"
+                "Oi, tudo bem? Meu nome é Edu. Sou o assistente virtual da Secretaria Municipal de Educação de São Paulo e estou aqui para ajudar você. É só escolher uma das opções aqui embaixo."
             ],
             "menu": false
         },
@@ -102,7 +127,7 @@
         },
         "Avaliar refeição": {
             "_id_fluxo": "avaliacao",
-            "argumentos": ["escola", "idade", "data_avaliacao", "nota", "comentario_confirm"],
+            "argumentos": ["escola", "idade", "data_avaliacao", "nota1", "nota2", "nota3", "nota4", "comentario_confirm"],
             "resposta": [
                 "Obrigado pela sua avaliação!"
             ],
@@ -113,7 +138,7 @@
             "_id_fluxo": "notificacao",
             "argumentos": ["escola", "idade"],
             "resposta": [
-                "Pode deixar! Te avisarei diariamente qual o cardápio ;)"
+                "Agora é só deixar comigo. Todos os dias, eu vou enviar o cardápio das suas refeições para você."
             ],
             "menu": true,
             "ordem": 2
