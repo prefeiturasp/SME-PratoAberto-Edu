@@ -1,16 +1,14 @@
 # -*- coding: utf-8 -*-
 import json
 import requests
-
 from urllib.parse import urlencode
-from app_config import API_URL, URI_ESCOLAS, URI_ESCOLA, URI_CARDAPIOS
 
+from app_config import API_URL, ENDPOINT_ESCOLAS, ENDPOINT_ESCOLA, ENDPOINT_CARDAPIOS
 
-def get_url(uri, kwargs=dict()):
-    url = '{}{}?{}'.format(API_URL, uri, urlencode(kwargs))
-    print(url)
+def api_call(endpoint, kwargs=dict()):
+    url = '{}{}?{}'.format(API_URL, endpoint, urlencode(kwargs))
     response = requests.get(url)
-    content = response.content.decode("utf8")
+    content = response.content.decode('utf8')
     return json.loads(content)
 
 def find_escolas(query):
@@ -18,19 +16,16 @@ def find_escolas(query):
         'nome': query,
         'limit': 4
     }
-    return get_url(URI_ESCOLAS, query_args)
+    endpoint = ENDPOINT_ESCOLAS
+    return api_call(endpoint, query_args)
 
-def get_escola(query):
-    url = URI_ESCOLA.format(query)
-    return get_url(url)
+def get_escola(id_escola):
+    endpoint = ENDPOINT_ESCOLA.format(id_escola)
+    return api_call(endpoint)
 
-def get_cardapio(escola, idade, data):
-    query = {
-        # 'status': 'PUBLICADO',
-        # 'idade': idade,
-        # 'agrupamento': escola['agrupamento'],
-        # 'tipo_unidade': escola['tipo_unidade'],
-        # 'tipo_atendimento': escola['tipo_atendimento']
+def get_cardapio(id_escola, idade, data):
+    query_args = {
+        'idade': idade
     }
-    url = URI_CARDAPIOS.format(data)
-    return get_url(url, query)
+    endpoint = ENDPOINT_CARDAPIOS.format(id_escola, data)
+    return api_call(endpoint, query_args)

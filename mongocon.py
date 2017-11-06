@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 from pymongo import MongoClient
 
-from app_config import MONGO_URL
+from app_config import MONGO_URL, APP_NAME
 
-db = MongoClient(MONGO_URL)
+def new_client():
+	client = MongoClient(MONGO_URL)
+	db = client[APP_NAME]
+	return db

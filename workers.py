@@ -1,43 +1,50 @@
 # -*- coding: utf-8 -*-
+import calendar
+import time
+
 from celery import Celery
 
+import app_config
 import message_handlers
+import mongocon
 import workflow
 
-import app_config
-from mongocon import db
-
+_get_epoch = lambda: calendar.timegm(time.localtime())
 
 # configura Celery object
 app = Celery(app_config.APP_NAME)
 app.config_from_object('app_config')
 
+# obtem uma conexao ao banco
+db = mongocon.new_client()
 
 @app.task
 def process_message(update):
-    # main menu
-    botoes = workflow.main_menu
+    # menu principal
+    botoes = workflow.menu_principal
     # obtem argumentos da mensagem
     source = update['source']
     chat_processor, chat_dispatcher = message_handlers.processors[source], message_handlers.dispatchers[source]
     texto, chat_id = chat_processor(update['data'])
 
-    query = {'_id': chat_id}
+    query = {'chat_id': chat_id, 'status': 'aberto'}
     # carrega estado do chat e define fluxo
-    chat = db.educassis.chats.find_one(query)
+    chat = db.interacoes.find_one(query)
     if not chat:
         # novo fluxo
         # import rpdb; rpdb.set_trace()
-        _fluxo = workflow.fluxos.get(texto, workflow.fluxos['default'])
+        _fluxo = workflow.fluxos.get(texto.capitalize(), workflow.fluxos['default'])
         try:
             args = _fluxo['argumentos']
             chat = {
-                '_id': chat_id,
-                '_id_fluxo': _fluxo['_id_fluxo'],
-                'fluxo': texto,
+                'chat_id': chat_id,
+                'id_fluxo': _fluxo['_id_fluxo'],
+                'fluxo': texto.capitalize(),
                 'argumentos': args,
                 'arg_corrente': args[0],
-                'valores': [None]*len(args)
+                'valores': [None]*len(args),
+                'status': 'aberto',
+                'timestamp': _get_epoch()
             }
         except KeyError:
             # fluxo sem argumentos, basta responder
@@ -55,16 +62,26 @@ def process_message(update):
         try:
             chat = workflow.process_arguments(chat, texto)
             resposta, botoes = chat['resposta'], chat['botoes']
-            # persiste estado do caht
-            db.educassis.chats.replace_one(query, chat, upsert=True)
+            # persiste estado do chat
+            chat['timestamp'] = _get_epoch()
+            db.interacoes.replace_one(query, chat, upsert=True)
             texto = None
         except ValueError:
             # argumentos estao completos
-            db.educassis.chats.delete_one(query)
-            # delega logica para os processadores de fluxo
-            _id_fluxo = chat['_id_fluxo']
+            _id_fluxo = chat['id_fluxo']
             _fn = workflow.processors[_id_fluxo]
             resposta, botoes = _fn(chat)
+            # atualiza interacao com a ultima resposta
+            chat = {
+                '_id': chat['_id'],
+                'chat_id': chat['chat_id'],
+                'id_fluxo': chat['id_fluxo'],
+                'valores': dict(zip(chat['argumentos'], chat['valores'])),
+                'resposta': resposta,
+                'timestamp': _get_epoch(),
+                'status': 'sucesso'
+            }
+            db.interacoes.replace_one(query, chat)
 
     chat_dispatcher(chat_id, resposta, botoes)
     return {
@@ -72,7 +89,3 @@ def process_message(update):
         'texto': resposta,
         'botoes': botoes
     }
-
-
-if __name__ == '__main__':
-    app.start()

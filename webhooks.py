@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
 
-from celery import Celery
 from flask import Flask, request
 
 from workers import process_message, app_config
@@ -27,5 +26,6 @@ def facebook():
             return request.args.get('hub.challenge')
         return "Wrong Verify Token"
 
+
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)

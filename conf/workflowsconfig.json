@@ -5,6 +5,12 @@
                 ":)"
             ]
         },
+        "erro_api": {
+            "texto": [
+                "Ops! Houve algum erro nos nossos sistemas :(",
+                "Já estamos trabalhando no problema, então vou te pedir para tentar novamente mais tarde, tudo bem?"
+            ]
+        },
         "argumentos": {
             "texto": [
                 "Ok! Antes precisamos saber de mais algumas informações."
@@ -15,7 +21,7 @@
                 "Por favor, digite para mim o nome da escola."
             ]
         },
-        "escola_nenhuma_opcao": {
+        "escola_invalida": {
             "texto": [
                 "Ops! Não encontrei nenhuma escola com esta busca.",
                 "Por favor, tente novamente."
@@ -50,7 +56,7 @@
                 "Tudo bem! Me informe a data. (Por exemplo: 23/01/2017)"
             ]
         },
-        "nota1": {
+        "nota_gostou_da_comida": {
             "texto": [
                 "Você gostou da comida?"
             ],
@@ -58,7 +64,7 @@
                 "Sim", "Não"
             ]
         },
-        "nota2": {
+        "nota_se_sentiu_satisfeito": {
             "texto": [
                 "Você se sentiu satisfeito depois da refeição?"
             ],
@@ -66,7 +72,7 @@
                 "Sim", "Não"
             ]
         },
-        "nota3": {
+        "nota_refeicao": {
             "texto": [
                 "O que você achou dessa refeição?"
             ],
@@ -74,12 +80,9 @@
                 "Sem gosto", "Normal", "Gostoso", "Muito Gostoso"
             ]
         },
-        "nota4": {
+        "refeicao_preferida": {
             "texto": [
                 "Qual a refeição do cardápio que você mais gostou?"
-            ],
-            "opcoes": [
-                "Café da manhã", "Almoço", "Colação", "Jantar"
             ]
         },
         "comentario_confirm": {
@@ -106,6 +109,12 @@
             ],
             "menu": false
         },
+        "Oi": {
+            "resposta": [
+                "Oi! Use os botões abaixo para podermos conversar!"
+            ],
+            "menu": false
+        },
         "default": {
             "resposta": [
                 "Ops, não entendi sua mensagem. :(",
@@ -127,7 +136,16 @@
         },
         "Avaliar refeição": {
             "_id_fluxo": "avaliacao",
-            "argumentos": ["escola", "idade", "data_avaliacao", "nota1", "nota2", "nota3", "nota4", "comentario_confirm"],
+            "argumentos": [
+                "escola",
+                "idade",
+                "data_avaliacao",
+                "nota_gostou_da_comida",
+                "nota_se_sentiu_satisfeito",
+                "nota_refeicao",
+                "refeicao_preferida",
+                "comentario_confirm"
+            ],
             "resposta": [
                 "Obrigado pela sua avaliação!"
             ],

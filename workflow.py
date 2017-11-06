@@ -1,24 +1,26 @@
 # -*- coding: utf-8 -*-
+import calendar
 import io
 import json
 import pprint
-
+import time
 from datetime import date
+
 from celery.utils.log import get_task_logger
 
 import api_client as api
-from mongocon import db
+import mongocon
 
 logger = get_task_logger(__name__)
+db = mongocon.new_client()
 
 # carrega workflows
 with io.open('conf/workflowsconfig.json', 'r', encoding='utf-8') as f:
     workflows = json.load(f)
     # constroi dicionario com a mensagem como chave
-    # for platform, fl in workflows['flows'].items()
     fluxos, mensagens = workflows['fluxos'], workflows['mensagens']
-    main_menu = [a for a, b in sorted([x for x in fluxos.items() if x[1]['menu']],
-                                        key=lambda x: x[1].get('ordem'))]
+    menu_principal = [a for (a, b) in sorted([x for x in fluxos.items() if x[1]['menu']],
+                                             key=lambda x: x[1].get('ordem'))]
 
 
 def _format(text, args=list()):
@@ -26,14 +28,16 @@ def _format(text, args=list()):
 
 
 # processadores
-# @return: text_mask, text_args, keyboard
+# @return: resposta, botoes
 def process_cardapio(chat):
     escola, idade, data = chat['valores']
-    # converte opcoes de data
-    _hoje = date.today().strftime('%Y%m%d')
-    data = int(_hoje) + 1*(data=='Amanhã') - 1*(data=='Ontem')
     # busca cardapio
-    cardapio = api.get_cardapio(escola, idade, data)
+    try:
+        cardapio = api.get_cardapio(escola['_id'], idade, data)
+    except:
+        # erro na API
+        return _format(mensagens['erro_api']['texto']), menu_principal
+
     # processa resposta
     if len(cardapio) > 0:
         cardapio = cardapio.pop()
@@ -43,23 +47,27 @@ def process_cardapio(chat):
 
     resposta = fluxos[chat['fluxo']]['resposta']
     args = (escola['nome'], idade, _format(cardapio_str))
-    return _format(resposta, args), main_menu
+    return _format(resposta, args), menu_principal
 
 def process_avaliacao(chat):
-    id_escola, idade, data, nota, comentario = chat['valores']
-    return _format(fluxos[chat['fluxo']]['resposta']), main_menu
+    return _format(fluxos[chat['fluxo']]['resposta']), menu_principal
 
 def process_notificacao(chat):
     id_escola, idade = chat['valores']
-    return _format(fluxos[chat['fluxo']]['resposta']), main_menu
 
-def process_votacao(chat):
-    voto = chat['valores']
-    resposta = fluxos[chat['fluxo']]['resposta']
-    return _format(resposta, voto), main_menu
+    # salva interacao
+    key = { 'id_chat': chat['_id'] }
+    registro_interacao = {
+        'cod_eol': escola['cod_eol'],
+        'idade': escola['idade']
+    }
+    db.notificoes.update(key, registro_interacao, upsert=True)
+
+    return _format(fluxos[chat['fluxo']]['resposta']), menu_principal
 
 
 # construtores de argumentos
+# @return: chat
 def process_arguments(chat, texto):
     logger.debug('in:process_arguments: {}'.format(texto))
     logger.debug(pprint.pformat(chat))
@@ -80,8 +88,8 @@ def process_arguments(chat, texto):
         if texto:
             chat = _update_arg(chat, texto)
 
-    logger.debug(pprint.pformat(chat))
     logger.debug('out:process_arguments')
+    logger.debug(pprint.pformat(chat))
     return chat
 
 def _update_arg(chat, valor):
@@ -109,16 +117,38 @@ def _get_escola(chat, texto):
         chat['sub_status'] = 1
     else:
         resposta, botoes = None, None
-        escolas = api.find_escolas(texto)
+        try:
+            escolas = api.find_escolas(texto)
+        except:
+            # erro na API
+            chat.update({
+                'resposta': _format(mensagens['erro_api']['texto']),
+                'botoes': menu_principal,
+                'status': 'erro'
+            })
+            return chat
+
         if len(escolas) == 0:
-            msg = mensagens['escola_nenhuma_opcao']
+            msg = mensagens['escola_invalida']
             chat['resposta'] = _format(msg['texto'])
         else:
+            texto = texto.upper()
             botoes = [c['nome'] for c in escolas]
             if texto in botoes:
-                _id = escolas[botoes.index(texto)]['_id']
-                escola = api.get_escola(_id)
+                escola = escolas[botoes.index(texto)]
                 chat = _update_arg(chat, escola)
+                # obtem dados da escola para uso futuro
+                try:
+                    escola = api.get_escola(escola['_id'])
+                    chat['escola'] = escola
+                except:
+                    # erro na API
+                    chat.update({
+                        'resposta': _format(mensagens['erro_api']['texto']),
+                        'botoes': menu_principal,
+                        'status': 'erro'
+                    })
+                    return chat
             else:
                 msg = mensagens['escola_confirm']
                 chat.update({
@@ -129,12 +159,37 @@ def _get_escola(chat, texto):
     return chat
 
 def _get_idade(chat, texto):
-    escola = chat['valores'][0]
-    botoes = sorted([c for c in escola['idades']])
-    if texto or len(botoes) == 1:
-        chat = _update_arg(chat, texto or botoes[0])
+    if texto:
+        chat = _update_arg(chat, texto.upper())
     else:
-        chat['botoes'] = botoes
+        escola = chat['escola']
+        botoes = sorted([c for c in escola['idades']])
+        if len(botoes) == 1:
+            chat = _update_arg(chat, botoes[0])
+        else:
+            chat['botoes'] = botoes
+
+    return chat
+
+def _get_data(chat, texto):
+    if texto:
+        _hoje = date.today().strftime('%Y%m%d')
+        data = int(_hoje) + 1*(texto=='amanhã') - 1*(texto=='ontem')
+        chat = _update_arg(chat, data)
+    return chat
+
+def _get_data_cardapio(chat, texto):
+    return _get_data(chat, texto)
+
+def _get_data_avaliacao(chat, texto):
+    return _get_data(chat, texto)
+
+def _get_refeicao_preferida(chat, texto):
+    if texto:
+        chat = _update_arg(chat, texto.upper())
+    else:
+        escola = chat['escola']
+        chat['botoes'] = sorted([c for c in escola['refeicoes']])
 
     return chat
 
@@ -143,7 +198,7 @@ def _get_comentario_confirm(chat, texto):
     _arg_status = chat.get('sub_status', 0)
     if not _arg_status:
         chat['sub_status'] = 1
-    elif texto == 'Sim':
+    elif texto == 'sim':
         msg = mensagens['comentario']
         chat.update({
             'resposta': _format(msg['texto']),
@@ -167,5 +222,5 @@ getters = {
 }
 
 if __name__ == '__main__':
-    print(fns)
-
+    print(processors)
+    print(getters)

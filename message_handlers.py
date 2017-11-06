@@ -6,10 +6,29 @@ import requests
 
 from celery.utils.log import get_task_logger
 
-from app_config import TG_BASE_MESSAGE_URL, FB_URL
+import mongocon
+from app_config import TG_BASE_MESSAGE_URL, FB_URL, FB_PROFILE_URL
 
 logger = get_task_logger(__name__)
+db = mongocon.new_client()
 
+def _update_chat(chat_id, source, payload):
+    query = { '_id': chat_id }
+    chat = db.chats.find_one(query)
+    if not chat:
+        if source == 'telegram':
+            nome = payload['message']['chat']['first_name']
+        else:
+            try:
+                r = requests.get(FB_PROFILE_URL % (chat_id))
+                nome = r.json()['first_name']
+            except:
+                nome = None
+        payload = {
+            'nome': nome,
+            'source': source
+        }
+        chat = db.chats.update_one(query, { '$set': payload }, upsert=True)
 
 # Telegram
 def _telegram_payload(payload):
@@ -17,8 +36,10 @@ def _telegram_payload(payload):
     logger.debug(pprint.pformat(payload))
 
     chat_id = payload['message']['chat']['id']
+    _update_chat(chat_id, 'telegram', payload)
+
     text = payload['message']['text']
-    return text, chat_id
+    return text.strip().lower(), chat_id
 
 def _telegram_dispatch(chat_id, text, keyboard=None):
     # codifica mensagem para url
@@ -44,7 +65,8 @@ def _facebook_payload(payload):
 
     message = payload['entry'][0]['messaging'][0]
 
-    sender_id = message['sender']['id']
+    chat_id = message['sender']['id']
+    _update_chat(chat_id, 'facebook', payload)
 
     try:
         _message = message['message']
@@ -54,7 +76,7 @@ def _facebook_payload(payload):
             text = _message['text']
     except:
         text = message['postback']['payload']
-    return text, sender_id
+    return text.strip().lower(), chat_id
 
 def _facebook_dispatch(chat_id, text, keyboard=None):
     payload = {

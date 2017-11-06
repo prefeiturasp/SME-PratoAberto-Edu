@@ -1,51 +1,49 @@
 # -*- coding: utf-8 -*-
-# workers app configuration file
 import configparser
 
-# arquivo properties
+# arquivo propriedades
 config = configparser.ConfigParser()
 config.read('conf/bot.conf')
 
 # flask app
-APP_NAME = 'educassis'
-
-# mongo conf
-MONGO_URL = 'mongodb://{}:{}'.format(config.get('ENDPOINTS', 'MONGO_HOST'),
-									 config.get('ENDPOINTS', 'MONGO_PORT'))
-
-# celery conf
-# http://docs.celeryproject.org/en/latest/userguide/configuration.html
-BROKER_URL = config.get('ENDPOINTS', 'BROKER_URL')
-CELERY_RESULT_BACKEND = 'mongodb'
-CELERY_MONGODB_BACKEND_SETTINGS = {
-    'host': config.get('ENDPOINTS', 'MONGO_HOST'),
-    'port': config.getint('ENDPOINTS', 'MONGO_PORT'),
-    'database': APP_NAME,
-    'taskmeta_collection': 'messages_meta',
-}
-CELERY_ENABLE_UTC = False
-CELERY_TIMEZONE = 'America/Sao_Paulo'
-
+APP_NAME = 'edu'
 
 # tokens
 TG_TOKEN = config.get('TOKENS', 'TG_TOKEN')
 FB_VERIFY_TOKEN = config.get('TOKENS', 'FB_VERIFY_TOKEN')
 FB_TOKEN = config.get('TOKENS', 'FB_TOKEN')
 
-# chat platforms urls
+# URLs plataforma de chat
 TG_URL = 'https://api.telegram.org/bot{}/'.format(TG_TOKEN)
 TG_BASE_MESSAGE_URL = TG_URL + 'sendMessage?chat_id={}&text={}&parse_mode=Markdown'
 FB_URL = 'https://graph.facebook.com/v2.6/me/messages/?access_token={}'.format(FB_TOKEN)
+FB_PROFILE_URL = 'https://graph.facebook.com/v2.6/%s?fields=first_name&access_token={}'.format(FB_TOKEN)
 
-
-# pratoaberto api urls
+# pratoaberto api
 API_URL = config.get('ENDPOINTS', 'API_URL')
-URI_ESCOLAS = 'escolas'
-URI_ESCOLA = 'escola/{}'
-URI_CARDAPIOS = 'cardapios/{}'
+ENDPOINT_ESCOLAS = 'escolas'
+ENDPOINT_ESCOLA = 'escola/{}'
+ENDPOINT_CARDAPIOS = 'escola/{}/cardapios/{}'
 
+# mongo
+MONGO_HOST = config.get('ENDPOINTS', 'MONGO_HOST')
+MONGO_PORT = config.get('ENDPOINTS', 'MONGO_PORT')
+MONGO_URL = 'mongodb://{}:{}'.format(MONGO_HOST, MONGO_PORT)
 
-# flower configs, see docs at
+# celery
+# http://docs.celeryproject.org/en/latest/userguide/configuration.html
+broker_url = config.get('ENDPOINTS', 'broker_url')
+result_backend = 'mongodb'
+mongodb_backend_settings = {
+    'host': MONGO_HOST,
+    'port': MONGO_PORT,
+    'database': APP_NAME,
+    'taskmeta_collection': 'messages_meta',
+}
+enable_utc = False
+timezone = 'America/Sao_Paulo'
+
+# flower
 # https://flower.readthedocs.io/en/latest/config.html
 broker_api = config.get('FLOWER', 'BROKER_API')
 url_prefix = config.get('FLOWER', 'URL_PREFIX')
