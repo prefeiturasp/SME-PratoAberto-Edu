@@ -4,19 +4,22 @@ import time
 
 from celery import Celery
 
-import app_config
-import message_handlers
+import chat_handlers
 import mongocon
 import workflow
 
-_get_epoch = lambda: calendar.timegm(time.localtime())
+from app_config import APP_NAME
+
 
 # configura Celery object
-app = Celery(app_config.APP_NAME)
+app = Celery(APP_NAME)
 app.config_from_object('app_config')
 
 # obtem uma conexao ao banco
 db = mongocon.new_client()
+
+
+_get_epoch = lambda: calendar.timegm(time.localtime())
 
 @app.task
 def process_message(update):
@@ -24,15 +27,26 @@ def process_message(update):
     botoes = workflow.menu_principal
     # obtem argumentos da mensagem
     source = update['source']
-    chat_processor, chat_dispatcher = message_handlers.processors[source], message_handlers.dispatchers[source]
+    chat_processor = chat_handlers.processors[source]
+    chat_dispatcher = chat_handlers.dispatchers[source]
+    chat_username = chat_handlers.usernames[source]
     texto, chat_id = chat_processor(update['data'])
 
-    query = {'chat_id': chat_id, 'status': 'aberto'}
+    # atualiza info usuario
+    query = { '_id': chat_id }
+    user = db.users.find_one(query)
+    if not user:
+        payload = {
+            'nome': chat_username(update['data']),
+            'source': source
+        }
+        user = db.users.update_one(query, { '$set': payload }, upsert=True)
+
     # carrega estado do chat e define fluxo
-    chat = db.interacoes.find_one(query)
+    query = {'chat_id': chat_id, 'status': 'aberto'}
+    chat = db.chats.find_one(query)
     if not chat:
         # novo fluxo
-        # import rpdb; rpdb.set_trace()
         _fluxo = workflow.fluxos.get(texto.capitalize(), workflow.fluxos['default'])
         try:
             args = _fluxo['argumentos']
@@ -49,7 +63,7 @@ def process_message(update):
         except KeyError:
             # fluxo sem argumentos, basta responder
             resposta = workflow._format(_fluxo['resposta'])
-            chat_dispatcher(chat_id, resposta, botoes)
+            chat_dispatcher.delay(chat_id, resposta, botoes)
             return {
                 'chat_id': chat_id,
                 'texto': resposta,
@@ -64,7 +78,7 @@ def process_message(update):
             resposta, botoes = chat['resposta'], chat['botoes']
             # persiste estado do chat
             chat['timestamp'] = _get_epoch()
-            db.interacoes.replace_one(query, chat, upsert=True)
+            db.chats.replace_one(query, chat, upsert=True)
             texto = None
         except ValueError:
             # argumentos estao completos
@@ -81,9 +95,9 @@ def process_message(update):
                 'timestamp': _get_epoch(),
                 'status': 'sucesso'
             }
-            db.interacoes.replace_one(query, chat)
+            db.chats.replace_one(query, chat)
 
-    chat_dispatcher(chat_id, resposta, botoes)
+    chat_dispatcher.delay(chat_id, resposta, botoes)
     return {
         'chat_id': chat_id,
         'texto': resposta,

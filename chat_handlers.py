@@ -4,31 +4,18 @@ import json
 import urllib
 import requests
 
+from celery import Celery
 from celery.utils.log import get_task_logger
 
-import mongocon
-from app_config import TG_BASE_MESSAGE_URL, FB_URL, FB_PROFILE_URL
+from app_config import APP_NAME, TG_BASE_MESSAGE_URL, FB_URL, FB_PROFILE_URL
+
+
+# configura Celery object
+app = Celery(__name__)
+app.config_from_object('app_config')
 
 logger = get_task_logger(__name__)
-db = mongocon.new_client()
 
-def _update_chat(chat_id, source, payload):
-    query = { '_id': chat_id }
-    chat = db.chats.find_one(query)
-    if not chat:
-        if source == 'telegram':
-            nome = payload['message']['chat']['first_name']
-        else:
-            try:
-                r = requests.get(FB_PROFILE_URL % (chat_id))
-                nome = r.json()['first_name']
-            except:
-                nome = None
-        payload = {
-            'nome': nome,
-            'source': source
-        }
-        chat = db.chats.update_one(query, { '$set': payload }, upsert=True)
 
 # Telegram
 def _telegram_payload(payload):
@@ -36,11 +23,14 @@ def _telegram_payload(payload):
     logger.debug(pprint.pformat(payload))
 
     chat_id = payload['message']['chat']['id']
-    _update_chat(chat_id, 'telegram', payload)
 
     text = payload['message']['text']
     return text.strip().lower(), chat_id
 
+def _telegram_get_name(payload):
+    return payload['message']['chat']['first_name']
+
+@app.task
 def _telegram_dispatch(chat_id, text, keyboard=None):
     # codifica mensagem para url
     text = urllib.parse.quote_plus(text)
@@ -66,7 +56,6 @@ def _facebook_payload(payload):
     message = payload['entry'][0]['messaging'][0]
 
     chat_id = message['sender']['id']
-    _update_chat(chat_id, 'facebook', payload)
 
     try:
         _message = message['message']
@@ -78,6 +67,17 @@ def _facebook_payload(payload):
         text = message['postback']['payload']
     return text.strip().lower(), chat_id
 
+def _facebook_get_name(payload):
+    message = payload['entry'][0]['messaging'][0]
+    chat_id = message['sender']['id']
+    try:
+        r = requests.get(FB_PROFILE_URL % (chat_id))
+        nome = r.json()['first_name']
+    except:
+        nome = None
+    return nome
+
+@app.task
 def _facebook_dispatch(chat_id, text, keyboard=None):
     payload = {
         'recipient': {'id': chat_id},
@@ -131,19 +131,17 @@ def _facebook_dispatch(chat_id, text, keyboard=None):
 
     # envia requisicao para plataforma de chat
     r = requests.post(FB_URL, json=payload)
-
     logger.debug('facebook dispatch:')
     logger.debug(pprint.pformat(payload))
     logger.debug('return: {}-{}'.format(r.status_code, r.text))
+    # check for return and if error, raise exception to retry
+    # try:
+    # except:
+    #     raise self.retry(exc=exc, countdown=60)
 
 
 # dicts
-processors = {
-    'telegram': _telegram_payload,
-    'facebook': _facebook_payload
-}
-
-dispatchers = {
-    'telegram': _telegram_dispatch,
-    'facebook': _facebook_dispatch
-}
+platforms = ['telegram', 'facebook']
+processors = {k: globals()['_{}_payload'.format(k)] for k in platforms}
+dispatchers = {k: globals()['_{}_dispatch'.format(k)] for k in platforms}
+usernames = {k: globals()['_{}_get_name'.format(k)] for k in platforms}

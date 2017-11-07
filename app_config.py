@@ -42,6 +42,15 @@ mongodb_backend_settings = {
 }
 enable_utc = False
 timezone = 'America/Sao_Paulo'
+task_default_queue = 'messages'
+task_routes = {
+	'workers.process_message': {'queue': 'messages'},
+	'chat_handlers._telegram_dispatch': {'queue': 'telegram'},
+	'chat_handlers._facebook_dispatch': {'queue': 'facebook'}
+}
+task_annotations = {
+	'chat_handlers._telegram_dispatch': {'rate_limit': '30/s'},
+}
 
 # flower
 # https://flower.readthedocs.io/en/latest/config.html
