@@ -25,13 +25,14 @@ def _telegram_payload(payload):
     chat_id = payload['message']['chat']['id']
 
     text = payload['message']['text']
-    return text.strip().lower(), chat_id
+    return text.strip(), chat_id
 
 def _telegram_get_name(payload):
     return payload['message']['chat']['first_name']
 
-@app.task
-def _telegram_dispatch(chat_id, text, keyboard=None):
+@app.task(bind=True)
+def _telegram_dispatch(self, chat_id, text, keyboard=None):
+    logger.debug('telegram dispatch self: {}'.format(self))
     # codifica mensagem para url
     text = urllib.parse.quote_plus(text)
     # constroi url
@@ -46,6 +47,11 @@ def _telegram_dispatch(chat_id, text, keyboard=None):
     logger.debug('telegram dispatch:')
     logger.debug(url)
     logger.debug('return: {}-{}'.format(r.status_code, r.text))
+
+    if not r.ok:
+        raise self.retry(exc=r.json())
+
+    return r.json()
 
 
 # Facebook
@@ -65,7 +71,7 @@ def _facebook_payload(payload):
             text = _message['text']
     except:
         text = message['postback']['payload']
-    return text.strip().lower(), chat_id
+    return text.strip(), chat_id
 
 def _facebook_get_name(payload):
     message = payload['entry'][0]['messaging'][0]
@@ -77,8 +83,8 @@ def _facebook_get_name(payload):
         nome = None
     return nome
 
-@app.task
-def _facebook_dispatch(chat_id, text, keyboard=None):
+@app.task(bind=True)
+def _facebook_dispatch(self, chat_id, text, keyboard=None):
     payload = {
         'recipient': {'id': chat_id},
         'message': {
@@ -88,7 +94,7 @@ def _facebook_dispatch(chat_id, text, keyboard=None):
 
     if keyboard:
         max_length = max(map(len, keyboard))
-        if max_length > 20:
+        if max_length >= 20:
             # dada a limitacao de 20 caracteres para botoes
             # enviar uma nova mensagem só com texto, e outra com as opções
             _facebook_dispatch(chat_id, text)
@@ -131,17 +137,23 @@ def _facebook_dispatch(chat_id, text, keyboard=None):
 
     # envia requisicao para plataforma de chat
     r = requests.post(FB_URL, json=payload)
+
     logger.debug('facebook dispatch:')
     logger.debug(pprint.pformat(payload))
     logger.debug('return: {}-{}'.format(r.status_code, r.text))
-    # check for return and if error, raise exception to retry
-    # try:
-    # except:
-    #     raise self.retry(exc=exc, countdown=60)
+
+    response = r.json()
+    if 'error' in response:
+        error = response['error']
+        if error['code'] in [1200, 613]:
+            exc_msg = '{}: {}'.format(error['code'], error['message'])
+            raise self.retry(exc=exc_msg)
+
+    return r.json()
 
 
 # dicts
-platforms = ['telegram', 'facebook']
-processors = {k: globals()['_{}_payload'.format(k)] for k in platforms}
-dispatchers = {k: globals()['_{}_dispatch'.format(k)] for k in platforms}
-usernames = {k: globals()['_{}_get_name'.format(k)] for k in platforms}
+services = ['telegram', 'facebook']
+processors = {k: globals()['_{}_payload'.format(k)] for k in services}
+dispatchers = {k: globals()['_{}_dispatch'.format(k)] for k in services}
+usernames = {k: globals()['_{}_get_name'.format(k)] for k in services}

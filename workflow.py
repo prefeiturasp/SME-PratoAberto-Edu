@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-import calendar
 import io
 import json
 import pprint
-import time
 from datetime import date
 
 from celery.utils.log import get_task_logger
@@ -12,15 +10,18 @@ import api_client as api
 import mongocon
 
 logger = get_task_logger(__name__)
-db = mongocon.new_client()
 
 # carrega workflows
 with io.open('conf/workflowsconfig.json', 'r', encoding='utf-8') as f:
     workflows = json.load(f)
     # constroi dicionario com a mensagem como chave
     fluxos, mensagens = workflows['fluxos'], workflows['mensagens']
+    # menu principal de botoes
     menu_principal = [a for (a, b) in sorted([x for x in fluxos.items() if x[1]['menu']],
                                              key=lambda x: x[1].get('ordem'))]
+    # menu principal de botoes para subscritos
+    menu_subscritos = menu_principal[:]
+    menu_subscritos[-1] = 'Cancelar notificações'
 
 
 def _format(text, args=list()):
@@ -28,8 +29,9 @@ def _format(text, args=list()):
 
 
 # processadores
+# @params: chat, db (Opcional)
 # @return: resposta, botoes
-def process_cardapio(chat):
+def process_cardapio(chat, db=None):
     escola, idade, data = chat['valores']
     # busca cardapio
     try:
@@ -47,32 +49,32 @@ def process_cardapio(chat):
 
     resposta = fluxos[chat['fluxo']]['resposta']
     args = (escola['nome'], idade, _format(cardapio_str))
-    return _format(resposta, args), menu_principal
+    return _format(resposta, args), None
 
-def process_avaliacao(chat):
-    return _format(fluxos[chat['fluxo']]['resposta']), menu_principal
+def process_notificacao(chat, db=None):
+    # configura subscricao
+    db.users.update_one(
+        { '_id': chat['chat_id'] },
+        { '$set': { 'subscription': chat['valores'] } }
+    )
+    return None, menu_subscritos
 
-def process_notificacao(chat):
-    id_escola, idade = chat['valores']
-
-    # salva interacao
-    key = { 'id_chat': chat['_id'] }
-    registro_interacao = {
-        'cod_eol': escola['cod_eol'],
-        'idade': escola['idade']
-    }
-    db.notificoes.update(key, registro_interacao, upsert=True)
-
-    return _format(fluxos[chat['fluxo']]['resposta']), menu_principal
+def process_cancelar_notificacao(chat, db=None):
+    # apaga subscricao
+    db.users.update_one(
+        { '_id': chat['chat_id'] },
+        { '$unset': { 'subscription': True  } }
+    )
+    return None, menu_principal
 
 
 # construtores de argumentos
+# @params: chat, texto da mensagem
 # @return: chat
 def process_arguments(chat, texto):
     logger.debug('in:process_arguments: {}'.format(texto))
     logger.debug(pprint.pformat(chat))
 
-    # import rpdb; rpdb.set_trace()
     _arg_corrente = chat['arg_corrente']
 
     msg = mensagens.get(_arg_corrente, dict())
@@ -83,6 +85,7 @@ def process_arguments(chat, texto):
 
     try:
         _fn = getters[_arg_corrente]
+        logger.debug('dispatching to: {}'.format(_fn))
         chat = _fn(chat, texto)
     except KeyError:
         if texto:
@@ -92,16 +95,17 @@ def process_arguments(chat, texto):
     logger.debug(pprint.pformat(chat))
     return chat
 
-def _update_arg(chat, valor):
+def _update_arg(chat, texto):
     # atualiza argumentos
     arg_corrente = chat['arg_corrente']
+    logger.debug('updating arg: {} to {}'.format(arg_corrente, texto))
 
     args = chat['argumentos']
     valores = chat['valores']
-    valores[args.index(arg_corrente)] = valor
+    valores[args.index(arg_corrente)] = texto
     # define proximo argumento
     chat.update({
-            'valores': valores,
+            # 'valores': valores,
             'arg_corrente': args[valores.index(None)],
             'resposta': None,
             'sub_status': None
@@ -132,7 +136,6 @@ def _get_escola(chat, texto):
             msg = mensagens['escola_invalida']
             chat['resposta'] = _format(msg['texto'])
         else:
-            texto = texto.upper()
             botoes = [c['nome'] for c in escolas]
             if texto in botoes:
                 escola = escolas[botoes.index(texto)]
@@ -160,7 +163,7 @@ def _get_escola(chat, texto):
 
 def _get_idade(chat, texto):
     if texto:
-        chat = _update_arg(chat, texto.upper())
+        chat = _update_arg(chat, texto)
     else:
         escola = chat['escola']
         botoes = sorted([c for c in escola['idades']])
@@ -174,7 +177,7 @@ def _get_idade(chat, texto):
 def _get_data(chat, texto):
     if texto:
         _hoje = date.today().strftime('%Y%m%d')
-        data = int(_hoje) + 1*(texto=='amanhã') - 1*(texto=='ontem')
+        data = int(_hoje) + 1*(texto=='Amanhã') - 1*(texto=='Ontem')
         chat = _update_arg(chat, data)
     return chat
 
@@ -186,7 +189,7 @@ def _get_data_avaliacao(chat, texto):
 
 def _get_refeicao_preferida(chat, texto):
     if texto:
-        chat = _update_arg(chat, texto.upper())
+        chat = _update_arg(chat, texto)
     else:
         escola = chat['escola']
         chat['botoes'] = sorted([c for c in escola['refeicoes']])
@@ -194,11 +197,10 @@ def _get_refeicao_preferida(chat, texto):
     return chat
 
 def _get_comentario_confirm(chat, texto):
-    # import rpdb; rpdb.set_trace()
     _arg_status = chat.get('sub_status', 0)
     if not _arg_status:
         chat['sub_status'] = 1
-    elif texto == 'sim':
+    elif texto == 'Sim':
         msg = mensagens['comentario']
         chat.update({
             'resposta': _format(msg['texto']),

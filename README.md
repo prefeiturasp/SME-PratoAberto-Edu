@@ -47,8 +47,8 @@ Note que:
 O Edu possui três coleções:
 
  * *messages_meta*, guarda informações das mensagens armazenadas nas filas
- * *chats*, guarda informações dos perfis que já interagiram com o robo
- * *interacoes*, guarda informações sobre as interações dos usuários
+ * *users*, guarda informações dos perfis que já interagiram com o robo
+ * *chats*, guarda informações sobre as interações dos usuários
 
 
 # Monitoria

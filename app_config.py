@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import configparser
 
+from celery.schedules import crontab
+
 # arquivo propriedades
 config = configparser.ConfigParser()
 config.read('conf/bot.conf')
@@ -40,16 +42,27 @@ mongodb_backend_settings = {
     'database': APP_NAME,
     'taskmeta_collection': 'messages_meta',
 }
-enable_utc = False
+enable_utc = True
 timezone = 'America/Sao_Paulo'
 task_default_queue = 'messages'
+# task_queue_max_priority = 2
 task_routes = {
-	'workers.process_message': {'queue': 'messages'},
-	'chat_handlers._telegram_dispatch': {'queue': 'telegram'},
-	'chat_handlers._facebook_dispatch': {'queue': 'facebook'}
+	'chat_processor.process_message': {'queue': 'messages', 'priority': 1, 'x-max-priority': 2},
+	'chat_platforms._telegram_dispatch': {'queue': 'telegram', 'retry_backoff': True, 'priority': 1, 'x-max-priority': 2},
+	'chat_platforms._facebook_dispatch': {'queue': 'facebook', 'retry_backoff': True, 'priority': 1, 'x-max-priority': 2}
 }
 task_annotations = {
-	'chat_handlers._telegram_dispatch': {'rate_limit': '30/s'},
+	'chat_platforms._telegram_dispatch': {'rate_limit': '30/s'},
+}
+beat_schedule = {
+    'subscriptions': {
+        'task': 'chat_processor.process_subscriptions',
+        # 'schedule': 10.0,
+        'schedule': crontab(hour=7, minute=0, day_of_week='mon-fri'),
+        'options': {
+        	'priority': 0
+        }
+    },
 }
 
 # flower

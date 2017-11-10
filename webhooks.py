@@ -4,7 +4,7 @@ import json
 from flask import Flask, request
 
 from app_config import FB_VERIFY_TOKEN
-from workers import process_message
+from chat_processor import process_message
 
 
 app = Flask(__name__)

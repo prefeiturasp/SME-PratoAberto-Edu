@@ -100,6 +100,12 @@
             "texto": [
                 "Ok! Só deixar seu comentário."
             ]
+        },
+        "notificacao": {
+            "texto": [
+                "Olá {}! Esta é sua notificação do cardápio de hoje:",
+                "{}"
+            ]
         }
     },
     "fluxos": {
@@ -109,7 +115,7 @@
             ],
             "menu": false
         },
-        "Oi": {
+        "oi": {
             "resposta": [
                 "Oi! Use os botões abaixo para podermos conversar!"
             ],
@@ -159,6 +165,14 @@
                 "Agora é só deixar comigo. Todos os dias, eu vou enviar o cardápio das suas refeições para você."
             ],
             "menu": true,
+            "ordem": 2
+        },
+        "Cancelar notificações": {
+            "_id_fluxo": "cancelar_notificacao",
+            "resposta": [
+                "Ok! Fico à disposição caso queira que eu volte a te avisar ;)"
+            ],
+            "menu": false,
             "ordem": 2
         }
     }
