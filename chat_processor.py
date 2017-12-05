@@ -110,7 +110,9 @@ def process_message(update):
             'nome': chat_username(update['data']),
             'source': source
         }
-        user = db.users.update_one(query, { '$set': user_info }, upsert=True)
+        db.users.update_one(query, { '$set': user_info }, upsert=True)
+        user = query
+        user.update(user_info)
 
     # menu principal padrão
     if 'subscription' in user:
