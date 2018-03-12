@@ -11,7 +11,7 @@ Atualmente, o robô permite aos usuários:
 
 # Arquitetura
 
-![arquitetura](https://github.com/PratoAberto/edu/blob/master/assets/arquitetura.png?raw=true)
+![arquitetura](https://raw.githubusercontent.com/prefeiturasp/SME-PratoAberto-Edu/master/assets/arquitetura.png)
 
 
 # Dependências
