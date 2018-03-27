@@ -1,3 +1,5 @@
+[![Maintainability](https://api.codeclimate.com/v1/badges/e30effbc913e73367217/maintainability)](https://codeclimate.com/github/prefeiturasp/SME-PratoAberto-Edu/maintainability)
+
 # Edu
 
 O Edu é o robô de atendimento virtual da SME.
