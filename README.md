@@ -66,4 +66,4 @@ Atualize `conf/bot.conf` com os apontamentos locais e tokens necessários e gere
 
 Os webHooks podem ser servidos diretamente do gUnicorn localmente através do [ngrok](https://ngrok.com/).
 
-A API serve os dados sobre escolas e refeições. Veja mais sobre a API no [repositório do projeto](https://github.com/PratoAberto/api)
+A API serve os dados sobre escolas e refeições. Veja mais sobre a API no [repositório do projeto](https://github.com/prefeiturasp/SME-PratoAberto-API).
