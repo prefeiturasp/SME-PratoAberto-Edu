@@ -34,7 +34,7 @@ def init_worker(**kwargs):
     db = mongocon.new_client()
     # testa conexão
     try:
-        client.admin.command('ismaster')
+        db.status
         print('Connection successful')
     except:
         print('mongo seems to be down!')
@@ -93,21 +93,21 @@ def process_subscriptions():
 
 
 @app.task()
-def process_message(update):
+def process_message(**kwargs):
     # configura handlers da plataforma
-    source = update['source']
+    source = kwargs['source']
     chat_processor = chat_platforms.processors[source]
     chat_username = chat_platforms.usernames[source]
 
     # obtem argumentos da mensagem
-    texto, chat_id = chat_processor(update['data'])
+    texto, chat_id = chat_processor(kwargs['data'])
 
     # atualiza info usuario
     query = { '_id': chat_id }
     user = db.users.find_one(query)
     if not user:
         user_info = {
-            'nome': chat_username(update['data']),
+            'nome': chat_username(kwargs['data']),
             'source': source
         }
         db.users.update_one(query, { '$set': user_info }, upsert=True)

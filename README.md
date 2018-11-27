@@ -64,6 +64,6 @@ As filas de tarefa do Celery podem ser monitoradas através do [flower](http://f
 
 Atualize `conf/bot.conf` com os apontamentos locais e tokens necessários e gerencie os status dos componentes com o supervisor (um arquivo de configuração está disponível em `conf/supervisor.edu.conf`)
 
-Os webHooks podem ser servidos diretamente do gUnicorn localmente através do [ngrok](https://ngrok.com/).
+Os webHooks podem ser servidos diretamente do gUnicorn localmente através do [ngrok](https://ngrok.com/) ou [serveo](https://serveo.net/).
 
 A API serve os dados sobre escolas e refeições. Veja mais sobre a API no [repositório do projeto](https://github.com/prefeiturasp/SME-PratoAberto-API).
