@@ -114,12 +114,6 @@ def process_message(**kwargs):
         user = query
         user.update(user_info)
 
-    # menu principal padrão
-    if 'subscription' in user:
-        menu_padrao = workflow.menu_subscritos
-    else:
-        menu_padrao = workflow.menu_principal
-
     # carrega estado do chat e define fluxo
     query = {'chat_id': chat_id, 'status': 'aberto'}
     chat = db.chats.find_one(query)
