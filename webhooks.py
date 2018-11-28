@@ -9,16 +9,20 @@ from chat_processor import process_message
 app = Flask(__name__)
 
 
+def process_message_task(source, msg_request):
+    process_message.delay(source=source, data=json.loads(msg_request.data.decode()))
+
+
 @app.route('/telegram', methods=['POST'])
 def telegram():
-    process_message.delay(source='telegram', data=json.loads(request.data.decode()))
+    process_message_task('telegram', request)
     return '', HTTPStatus.NO_CONTENT
 
 
 @app.route('/facebook', methods=['GET', 'POST'])
 def facebook():
     if request.method == 'POST':
-        process_message.delay(source='facebook', data=json.loads(request.data.decode()))
+        process_message_task('facebook', request)
         return '', HTTPStatus.NO_CONTENT
     elif request.method == 'GET':  # Para a verificação inicial
         if request.args.get('hub.verify_token') == FB_VERIFY_TOKEN:
