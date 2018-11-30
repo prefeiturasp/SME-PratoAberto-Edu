@@ -7,7 +7,6 @@ from datetime import date
 from celery.utils.log import get_task_logger
 
 import api_client as api
-import mongocon
 
 logger = get_task_logger(__name__)
 

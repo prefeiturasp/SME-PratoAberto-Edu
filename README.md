@@ -62,8 +62,14 @@ As filas de tarefa do Celery podem ser monitoradas através do [flower](http://f
 
 # Rodando localmente
 
-Atualize `conf/bot.conf` com os apontamentos locais e tokens necessários e gerencie os status dos componentes com o supervisor (um arquivo de configuração está disponível em `conf/supervisor.edu.conf`)
+* Atualize `conf/bot.conf` com os apontamentos locais e tokens necessários e gerencie os status dos componentes com o supervisor (um arquivo de configuração está disponível em `conf/supervisor.edu.conf`)
 
-Os webHooks podem ser servidos diretamente do gUnicorn localmente através do [ngrok](https://ngrok.com/).
+* Os webHooks podem ser servidos diretamente através do [ngrok](https://ngrok.com/) ou 
+[serveo](https://serveo.net/). Com serveo: `[PYTHON_ENV]/python webhooks.py` e `ssh -R 80:localhost:5001 serveo.net
+`
+  
+* A API serve os dados sobre escolas e refeições. Veja mais sobre a API no [repositório do projeto](https://github.com/prefeiturasp/SME-PratoAberto-API).
 
-A API serve os dados sobre escolas e refeições. Veja mais sobre a API no [repositório do projeto](https://github.com/prefeiturasp/SME-PratoAberto-API).
+* Para executar o [message broker](http://docs.celeryproject.org/en/latest/getting-started/brokers/rabbitmq.html): `sudo rabbitmq-server start` 
+
+* Para executar os workers: `[PYTHON_ENV]/celery -A chat_processor  worker --loglevel=info`

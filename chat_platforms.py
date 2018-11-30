@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
-import pprint
 import json
+import pprint
 import urllib
-import requests
 
+import requests
 from celery import Celery
 from celery.utils.log import get_task_logger
 
-from app_config import APP_NAME, TG_BASE_MESSAGE_URL, FB_URL, FB_PROFILE_URL
-
+from app_config import TG_BASE_MESSAGE_URL, FB_URL, FB_PROFILE_URL
 
 # configura Celery object
 app = Celery(__name__)
@@ -27,10 +26,12 @@ def _telegram_payload(payload):
     text = payload['message']['text']
     return text.strip(), chat_id
 
+
 def _telegram_get_name(payload):
     return payload['message']['chat']['first_name']
 
-@app.task(bind=True)
+
+@app.task(bind=True, name='telegram_dispatch')
 def _telegram_dispatch(self, chat_id, text, keyboard=None):
     logger.debug('telegram dispatch self: {}'.format(self))
     # codifica mensagem para url
@@ -73,6 +74,7 @@ def _facebook_payload(payload):
         text = message['postback']['payload']
     return text.strip(), chat_id
 
+
 def _facebook_get_name(payload):
     message = payload['entry'][0]['messaging'][0]
     chat_id = message['sender']['id']
@@ -83,7 +85,8 @@ def _facebook_get_name(payload):
         nome = None
     return nome
 
-@app.task(bind=True)
+
+@app.task(bind=True, name='facebook_dispatch')
 def _facebook_dispatch(self, chat_id, text, keyboard=None):
     payload = {
         'recipient': {'id': chat_id},
