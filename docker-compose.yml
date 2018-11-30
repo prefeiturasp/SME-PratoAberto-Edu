@@ -1,0 +1,34 @@
+version: '3'
+
+services:
+
+  rabbitmq:
+    image: rabbitmq:3.7.8-alpine
+    container_name: rabbitmq_prato
+    hostname: rabbitmq_prato
+    ports:
+    - 4369:4369
+    - 5671:5671
+    - 5672:5672
+    - 25672:25672
+    volumes:
+    - ./rabbitmq:/var/lib/rabbitmq
+
+  bot_webhook:
+    image: marcelomaia/prato_aberto_edu:1.1
+    command: python webhooks.py
+    ports:
+    - 5001:5001
+    volumes:
+    - .:/code
+
+  worker:
+    image: marcelomaia/prato_aberto_edu:1.1
+    command: celery -A chat_processor  worker --loglevel=info
+    volumes:
+    - .:/code
+    links:
+    - rabbitmq
+    depends_on:
+    - rabbitmq
+
