@@ -13,6 +13,8 @@ services:
     - 25672:25672
     volumes:
     - ./rabbitmq:/var/lib/rabbitmq
+    networks:
+    - prato_aberto
 
   bot_webhook:
     image: marcelomaia/prato_aberto_edu:1.1
@@ -21,6 +23,8 @@ services:
     - 5001:5001
     volumes:
     - .:/code
+    networks:
+    - prato_aberto
 
   worker:
     image: marcelomaia/prato_aberto_edu:1.1
@@ -31,4 +35,10 @@ services:
     - rabbitmq
     depends_on:
     - rabbitmq
+    networks:
+    - prato_aberto
 
+networks:
+  prato_aberto:
+    external:
+      name: smepratoabertoapi_default
