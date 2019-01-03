@@ -71,6 +71,9 @@ def process_subscriptions():
         }
         _fn = workflow.processors[fluxo['_id_fluxo']]
         resposta, _ = _fn(chat, db)
+        if 'Ops!' in resposta:
+            # XXX para nao enviar mensagem vazia
+            continue
         # salva notificacao
         chat = {
             'chat_id': chat_id,

@@ -47,12 +47,14 @@ timezone = 'America/Sao_Paulo'
 task_default_queue = 'messages'
 # task_queue_max_priority = 2
 task_routes = {
-	'chat_processor.process_message': {'queue': 'messages', 'priority': 1, 'x-max-priority': 2},
-	'chat_platforms._telegram_dispatch': {'queue': 'telegram', 'retry_backoff': True, 'priority': 1, 'x-max-priority': 2},
-	'chat_platforms._facebook_dispatch': {'queue': 'facebook', 'retry_backoff': True, 'priority': 1, 'x-max-priority': 2}
+    'chat_processor.process_message': {'queue': 'messages', 'priority': 1, 'x-max-priority': 2},
+    'chat_platforms._telegram_dispatch': {'queue': 'telegram', 'retry_backoff': True, 'priority': 1,
+                                          'x-max-priority': 2},
+    'chat_platforms._facebook_dispatch': {'queue': 'facebook', 'retry_backoff': True, 'priority': 1,
+                                          'x-max-priority': 2}
 }
 task_annotations = {
-	'chat_platforms._telegram_dispatch': {'rate_limit': '30/s'},
+    'chat_platforms._telegram_dispatch': {'rate_limit': '30/s'},
 }
 beat_schedule = {
     'subscriptions': {
@@ -60,7 +62,7 @@ beat_schedule = {
         # 'schedule': 10.0,
         'schedule': crontab(hour=7, minute=0, day_of_week='mon-fri'),
         'options': {
-        	'priority': 0
+            'priority': 0
         }
     },
 }
