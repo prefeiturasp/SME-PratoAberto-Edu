@@ -10,11 +10,11 @@ services:
 
   bot_webhook:
     build: .
-    command: python webhooks.py
-    ports:
-    - 5001:5001
+    command: gunicorn webhooks.py:app --timeout 120 --log-level DEBUG -w 1 -b 0.0.0.0:8002
     volumes:
     - .:/code
+    env_file:
+      - .env
 
   worker:
     build: .
@@ -25,6 +25,8 @@ services:
     - rabbitmq
     depends_on:
     - rabbitmq
+    env_file:
+      - .env
 
 networks:
   default:
