@@ -10,7 +10,7 @@ services:
 
   bot_webhook:
     build: .
-    command: gunicorn webhooks.py:app --timeout 120 --log-level DEBUG -w 1 -b 0.0.0.0:8002
+    command: gunicorn webhooks:app --timeout 120 --log-level DEBUG -w 1 -b 0.0.0.0:8002
     volumes:
     - .:/code
     env_file:

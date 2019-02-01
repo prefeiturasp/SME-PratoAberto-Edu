@@ -1,19 +1,15 @@
 # -*- coding: utf-8 -*-
-import configparser
+import os
 
 from celery.schedules import crontab
-
-# arquivo propriedades
-config = configparser.ConfigParser()
-config.read('conf/bot.conf')
 
 # flask app
 APP_NAME = 'edu'
 
 # tokens
-TG_TOKEN = config.get('TOKENS', 'TG_TOKEN')
-FB_VERIFY_TOKEN = config.get('TOKENS', 'FB_VERIFY_TOKEN')
-FB_TOKEN = config.get('TOKENS', 'FB_TOKEN')
+TG_TOKEN = os.environ.get('TG_TOKEN')
+FB_VERIFY_TOKEN = os.environ.get('FB_VERIFY_TOKEN')
+FB_TOKEN = os.environ.get('FB_TOKEN')
 
 # URLs plataforma de chat
 TG_URL = 'https://api.telegram.org/bot{}/'.format(TG_TOKEN)
@@ -22,19 +18,19 @@ FB_URL = 'https://graph.facebook.com/v2.6/me/messages/?access_token={}'.format(F
 FB_PROFILE_URL = 'https://graph.facebook.com/v2.6/%s?fields=first_name&access_token={}'.format(FB_TOKEN)
 
 # pratoaberto api
-API_URL = config.get('ENDPOINTS', 'API_URL')
+API_URL = os.environ.get('API_URL')
 ENDPOINT_ESCOLAS = 'escolas'
 ENDPOINT_ESCOLA = 'escola/{}'
 ENDPOINT_CARDAPIOS = 'escola/{}/cardapios/{}'
 
 # mongo
-MONGO_HOST = config.get('ENDPOINTS', 'MONGO_HOST')
-MONGO_PORT = config.get('ENDPOINTS', 'MONGO_PORT')
+MONGO_HOST = os.environ.get('MONGO_HOST')
+MONGO_PORT = os.environ.get('MONGO_PORT')
 MONGO_URL = 'mongodb://{}:{}'.format(MONGO_HOST, MONGO_PORT)
 
 # celery
 # http://docs.celeryproject.org/en/latest/userguide/configuration.html
-broker_url = config.get('ENDPOINTS', 'broker_url')
+broker_url = os.environ.get('BROKER_URL')
 result_backend = 'mongodb'
 mongodb_backend_settings = {
     'host': MONGO_HOST,
@@ -69,6 +65,6 @@ beat_schedule = {
 
 # flower
 # https://flower.readthedocs.io/en/latest/config.html
-broker_api = config.get('FLOWER', 'BROKER_API')
-url_prefix = config.get('FLOWER', 'URL_PREFIX')
-basic_auth = [config.get('FLOWER', 'BASIC_AUTH')]
+broker_api = os.environ.get('BROKER_API')
+url_prefix = os.environ.get('URL_PREFIX')
+basic_auth = [os.environ.get('BASIC_AUTH')]
