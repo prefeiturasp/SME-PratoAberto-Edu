@@ -11,16 +11,12 @@ TG_TOKEN = os.environ.get('TG_TOKEN')
 FB_TOKEN = os.environ.get('FB_TOKEN')
 
 # URLs plataforma de chat
+#TODO: passar isso aqui pra uma classe especifica de cada messageiro.
 TG_URL = 'https://api.telegram.org/bot{}/'.format(TG_TOKEN)
 TG_BASE_MESSAGE_URL = TG_URL + 'sendMessage?chat_id={}&text={}&parse_mode=Markdown'
 FB_URL = 'https://graph.facebook.com/v2.6/me/messages/?access_token={}'.format(FB_TOKEN)
 FB_PROFILE_URL = 'https://graph.facebook.com/v2.6/%s?fields=first_name&access_token={}'.format(FB_TOKEN)
 
-# pratoaberto api
-API_URL = os.environ.get('API_URL')
-ENDPOINT_ESCOLAS = 'escolas'
-ENDPOINT_ESCOLA = 'escola/{}'
-ENDPOINT_CARDAPIOS = 'escola/{}/cardapios/{}'
 
 # mongo
 MONGO_HOST = os.environ.get('MONGO_HOST')
