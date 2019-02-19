@@ -13,7 +13,7 @@ import chat_platforms
 import mongocon
 import workflow
 
-from app_config import APP_NAME
+from celeryconfig import APP_NAME
 
 
 _get_epoch = lambda: calendar.timegm(time.localtime())

@@ -8,7 +8,6 @@ APP_NAME = 'edu'
 
 # tokens
 TG_TOKEN = os.environ.get('TG_TOKEN')
-FB_VERIFY_TOKEN = os.environ.get('FB_VERIFY_TOKEN')
 FB_TOKEN = os.environ.get('FB_TOKEN')
 
 # URLs plataforma de chat

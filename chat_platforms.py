@@ -7,11 +7,11 @@ import requests
 from celery import Celery
 from celery.utils.log import get_task_logger
 
-from app_config import TG_BASE_MESSAGE_URL, FB_URL, FB_PROFILE_URL
+from celeryconfig import TG_BASE_MESSAGE_URL, FB_URL, FB_PROFILE_URL
 
 # configura Celery object
 app = Celery(__name__)
-app.config_from_object('app_config')
+app.config_from_object('celeryconfig')
 
 logger = get_task_logger(__name__)
 

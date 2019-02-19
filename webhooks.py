@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
 import json
+import os
 from http import HTTPStatus
+
 from flask import Flask, request
 
-from app_config import FB_VERIFY_TOKEN
 from chat_processor import process_message
 
 app = Flask(__name__)
@@ -24,8 +24,8 @@ def facebook():
     if request.method == 'POST':
         process_message_task('facebook', request)
         return '', HTTPStatus.NO_CONTENT
-    elif request.method == 'GET':  # Para a verificação inicial
-        if request.args.get('hub.verify_token') == FB_VERIFY_TOKEN:
+    elif request.method == 'GET':   # Para o setup inicial do Facebook
+        if request.args.get('hub.verify_token') == os.environ.get('FB_VERIFY_TOKEN'):
             return request.args.get('hub.challenge')
         return "Wrong Verify Token"
 

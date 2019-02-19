@@ -3,7 +3,7 @@ import json
 import requests
 from urllib.parse import urlencode
 
-from app_config import API_URL, ENDPOINT_ESCOLAS, ENDPOINT_ESCOLA, ENDPOINT_CARDAPIOS
+from celeryconfig import API_URL, ENDPOINT_ESCOLAS, ENDPOINT_ESCOLA, ENDPOINT_CARDAPIOS
 
 def api_call(endpoint, kwargs=dict()):
     url = '{}{}?{}'.format(API_URL, endpoint, urlencode(kwargs))

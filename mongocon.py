@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from pymongo import MongoClient
 
-from app_config import MONGO_URL, APP_NAME
+from celeryconfig import MONGO_URL, APP_NAME
 
 
 def new_client():
