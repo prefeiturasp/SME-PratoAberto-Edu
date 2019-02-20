@@ -34,17 +34,23 @@ class PratoAbertoApiClient(object):
         url = urljoin(self.API_URL, 'escola')
         return self._base_request(urljoin(url, cod_eol))
 
-    def get_cardapio(self, id_escola, idade, data):
-        # TODO o que é data?
-        query_args = {'idade': idade}
-        url = '{}/escola/{}/cardapios'.format(self.API_URL, id_escola)
-        # /escola/<int:id_escola>/cardapios/<data>
-        url = url_join_with_params(base=url, url=data, params=query_args)
+    def get_cardapio(self, cod_eol, query_args):
+        """
+        :param cod_eol:
+        :param query_args: um dict que vai como parametro de busca nos
+        cardapios de uma escola. Ex: query_args = {
+                                                'idade': idade,
+                                                'data_inicial': '',
+                                                'data_final': ''}
+        :return:
+        """
+
+        url = '{}/escola/{}'.format(self.API_URL, cod_eol)
+        url = url_join_with_params(base=url, url='cardapios', params=query_args)
         return self._base_request(url)
 
     def get_escolas_by_name(self, nome):
         query_params = {'nome': nome,
                         'limit': 5}
         url = url_join_with_params(base=self.API_URL, url='escolas', params=query_params)
-        r = requests.get(url)
         return self._base_request(url)

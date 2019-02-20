@@ -36,6 +36,7 @@ def process_cardapio(chat, db=None):
     escola, idade, data = chat['valores']
     # busca cardapio
     try:
+        logger.debug('chat: {}\n chat valores {}\n data demon {}'.format(chat, chat['valores'], data))
         cardapio = api.get_cardapio(escola['_id'], idade, data)
     except:
         # erro na API
