@@ -31,6 +31,8 @@ def _format(text, args=list()):
 # @params: chat, db (Opcional)
 # @return: resposta, botoes
 def process_cardapio(chat, db=None):
+    # o que é chat? um json grande talvez? um payload?
+    # quando essa vergonha é chamada?
     escola, idade, data = chat['valores']
     # busca cardapio
     try:
@@ -223,5 +225,6 @@ getters = {
 }
 
 if __name__ == '__main__':
+    # essa maluquice poderia ter sido resolvida com getattr
     print(processors)
     print(getters)
