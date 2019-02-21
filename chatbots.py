@@ -1,8 +1,7 @@
+import json
 import logging
 import os
-import pprint
 import urllib
-import json
 
 import requests
 
@@ -11,7 +10,7 @@ from api_client import PratoAbertoApiClient
 log = logging.getLogger('chatbots')
 
 
-class BaseBot(object):
+class EduBot(object):
     """Faz pesquisas em comum entre os dois mensageiros"""
 
     def __init__(self, conn):
@@ -59,7 +58,22 @@ class BaseBot(object):
         return retval
 
 
-class TelegramBot(object):
+class BaseBot(object):
+
+    def __init__(self, payload):
+        self.payload = payload
+
+    def send_message(self, text, keyboard_opts=None):
+        raise NotImplementedError
+
+    def get_chat_name(self):
+        raise NotImplementedError
+
+    def get_text_and_chat_id(self):
+        raise NotImplementedError
+
+
+class TelegramBot(BaseBot):
     """
         https://api.telegram.org/bot<YOURTOKEN>/setWebhook  (para gerar webhook)
         https://api.telegram.org/bot780759709:AAGP1IigPhGtBqiIKK-dBaageSSOjq68mvM/setWebhook
@@ -72,24 +86,20 @@ class TelegramBot(object):
         'date': 1550693882, 'text': 'marcelus'}
         }
     """
-    os.environ['TG_TOKEN'] = '780759709:AAGP1IigPhGtBqiIKK-dBaageSSOjq68mvM'    # @edu_marcelo_test_bot
+    # TODO so receber um payload de um wehhook e desenrolar daqui pra frente?
+    os.environ['TG_TOKEN'] = '780759709:AAGP1IigPhGtBqiIKK-dBaageSSOjq68mvM'  # @edu_marcelo_test_bot
 
     TG_URL = 'https://api.telegram.org/bot{}/'.format(os.environ.get('TG_TOKEN'))
     TG_BASE_MESSAGE_URL = TG_URL + 'sendMessage?chat_id={}&text={}&parse_mode=Markdown'
 
-    def _telegram_payload(self, payload):
-        log.debug('telegram payload:')
-        log.debug(pprint.pformat(payload))
+    def __init__(self, payload):
+        super().__init__(payload)
+        self.payload = payload
+        self.chat_id = payload['message']['chat']['id']
+        self.text = payload['message']['text']
+        self.chat_name = payload['message']['chat']['first_name']
 
-        chat_id = payload['message']['chat']['id']
-
-        text = payload['message']['text']
-        return text.strip(), chat_id
-
-    def _telegram_get_name(self, payload):
-        return payload['message']['chat']['first_name']
-
-    def _telegram_dispatch(self, chat_id, text, keyboard_opts=None):
+    def send_message(self, text, keyboard_opts=None):
         """
 
         :param chat_id:
@@ -99,12 +109,8 @@ class TelegramBot(object):
         """
         text = urllib.parse.quote_plus(text)
 
-        url = self.TG_BASE_MESSAGE_URL.format(chat_id, text)
-        if keyboard_opts:
-            # https://core.telegram.org/bots/api/#keyboardbutton
-            keyboard_opts = [[text] for text in keyboard_opts]
-            reply_markup = {'keyboard': keyboard_opts, 'one_time_keyboard': True}
-            url += '&reply_markup={}'.format(json.dumps(reply_markup))
+        url = self.TG_BASE_MESSAGE_URL.format(self.chat_id, text)
+        url = self._concat_buttons(keyboard_opts, url)
 
         r = requests.get(url)
 
@@ -114,6 +120,24 @@ class TelegramBot(object):
 
         return r.json()
 
+    #
+    # Private
+    #
 
-t = TelegramBot()
-t._telegram_dispatch(chat_id='105113137', text='text', keyboard_opts=['mas credo', 'teste'])
+    def _concat_buttons(self, keyboard_opts, url, show_once=True):
+        if keyboard_opts:
+            # https://core.telegram.org/bots/api/#keyboardbutton
+            keyboard_opts = [[text] for text in keyboard_opts]
+            reply_markup = {'keyboard': keyboard_opts, 'one_time_keyboard': show_once}
+            url += '&reply_markup={}'.format(json.dumps(reply_markup))
+        return url
+
+
+payload = {'update_id': 458880384, 'message': {'message_id': 6, 'from':
+    {'id': 105113137, 'is_bot': False, 'first_name': 'Marcelo', 'last_name': 'Maia', 'username': 'MarceloMaiaa',
+     'language_code': 'pt-br'}, 'chat': {'id': 105113137, 'first_name': 'Marcelo', 'last_name': 'Maia',
+                                         'username': 'MarceloMaiaa', 'type': 'private'}, 'date': 1550693882,
+                                               'text': 'marcelus'}}
+
+t = TelegramBot(payload)
+t.send_message(text='fala cristão, escolhe um desses', keyboard_opts=['opção 1', 'opção 2'])
