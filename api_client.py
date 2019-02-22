@@ -54,3 +54,22 @@ class PratoAbertoApiClient(object):
                         'limit': 5}
         url = url_join_with_params(base=self.API_URL, url='escolas', params=query_params)
         return self._base_request(url)
+
+    def get_idades_by_escola_nome(self, nome):
+        """Aqui espera-se receber o nome completo da escola"""
+        #XXX: foi necessário fazer isso para receber os "relacionamentos" de dados
+        idades = []
+        try:
+            escola = self.get_escolas_by_name(nome)
+            escola = escola[0]
+            cod_eol = escola['_id']
+            url = '{}/escola/{}'.format(self.API_URL, cod_eol)
+            url += '/cardapios'
+            retval = self._base_request(url)
+            for i in retval:
+                if i['idade'] not in idades:
+                    idades.append(i['idade'])
+        except IndexError as e:
+            pass
+        return idades
+
