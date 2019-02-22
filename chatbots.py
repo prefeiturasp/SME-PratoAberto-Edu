@@ -1,11 +1,11 @@
+import datetime
 import json
 import logging
 import os
 import urllib
 from enum import Enum
-import datetime
+
 import requests
-from pymongo import MongoClient
 
 from api_client import PratoAbertoApiClient
 
@@ -58,16 +58,7 @@ class TelegramBot(BaseBot):
         self.chat_id = payload['message']['chat']['id']
         self.text = payload['message']['text'].strip()
         self.chat_name = payload['message']['chat']['first_name']
-        self.check_flow()
-
-    def check_flow(self):
-        """Caso o txt recebido seja um dos status iniciais, volta para o começo"""
-        if self.text in [BotFlowEnum.QUAL_CARDAPIO.value, BotFlowEnum.AVALIAR_REFEICAO.value,
-                         BotFlowEnum.ASSINAR_NOTIFICACAO.value]:
-            self.reset_flow(self.text)
-
-    def reset_flow(self, text):
-        self.set_flow(flow_name=text, step=0)
+        self._check_flow()
 
     def send_message(self, text, keyboard_opts=None):
         """
@@ -89,25 +80,15 @@ class TelegramBot(BaseBot):
 
         return r.json()
 
-    def create_user(self):
-        query = {'_id': self.chat_id}
-        user = self.conn.users.find_one(query)
-        if not user:
-            user_info = {
-                'name': self.chat_name,
-                'source': 'telegram'
-            }
-            self.conn.users.update_one(query, {'$set': user_info}, upsert=True)
-
     def update_user_data(self, args):
         """
-        Generic method, needs
+        Generic method, to update or create fields in user collection
         :param args: a dict
         """
         query = {'_id': self.chat_id}
         user = self.conn.users.find_one(query)
         if not user:
-            self.create_user()
+            self._create_user()
         self.conn.users.update_one(query, {'$set': args}, upsert=True)
 
     def get_current_flow(self):
@@ -120,7 +101,7 @@ class TelegramBot(BaseBot):
         query = {'_id': self.chat_id}
         user = self.conn.users.find_one(query)
         if not user:
-            self.create_user()
+            self._create_user()
         flow_info = {
             'flow_name': flow_name,
             'step': step
@@ -130,6 +111,25 @@ class TelegramBot(BaseBot):
     #
     # Private
     #
+
+    def _check_flow(self):
+        """Caso o txt recebido seja um dos status iniciais, volta para o começo"""
+        if self.text in [BotFlowEnum.QUAL_CARDAPIO.value, BotFlowEnum.AVALIAR_REFEICAO.value,
+                         BotFlowEnum.ASSINAR_NOTIFICACAO.value]:
+            self._reset_flow(self.text)
+
+    def _reset_flow(self, text):
+        self.set_flow(flow_name=text, step=0)
+
+    def _create_user(self):
+        query = {'_id': self.chat_id}
+        user = self.conn.users.find_one(query)
+        if not user:
+            user_info = {
+                'name': self.chat_name,
+                'source': 'telegram'
+            }
+            self.conn.users.update_one(query, {'$set': user_info}, upsert=True)
 
     def _concat_buttons(self, keyboard_opts, url, show_once=True):
         # https://core.telegram.org/bots/api/#keyboardbutton
@@ -143,57 +143,66 @@ class TelegramBot(BaseBot):
 class EduBot(object):
     """Faz pesquisas em comum entre os dois mensageiros
     Planos futuros: usar maquina de estados para cada conversa
-    https://github.com/pytransitions/transitions"""
+    https://github.com/pytransitions/transitions
+
+    (1) Recebe payloads e instancia o bot adequado de acordo com a plataforma
+    (2) Trata fluxo
+    (3) Pergunta pro objeto específico os dados da sua respectiva plataforma
+    """
     STEP_BUSCA_ESCOLA, STEP_ESCOLA_ESCOLHIDA, STEP_RETORNA_CARDAPIO = range(3)
-    STEP_STEP_ZERO = 0
+    STEP_ZERO = 0
 
     days_options = ['Hoje', 'Amanhã', 'Ontem']
 
-    idades_options = ['8 a 11 meses  - parcial',
-                      'EMEI da CEMEI',
-                      '6 a 7 meses - parcial',
-                      '7 meses',
-                      '0 a 5 meses',
-                      '6 meses',
-                      '4 a 6 anos - parcial',
-                      '2 a 3 anos - parcial',
-                      'Professor ',
-                      'Pro Jovem (filhos)',
-                      'Professor (jantar)',
-                      '2 a 6 anos',
-                      'Toda Idade',
-                      '6 a 7 meses',
-                      '2 a 3 anos',
-                      '0 a 1 mês',
-                      '4 a 5 meses',
-                      '8 a 11 meses',
-                      '1 ano - parcial',
-                      '1 a 3 meses',
-                      '4 a 6 anos',
-                      'Todas as idades',
-                      '1 ano']
+    ages_options = ['8 a 11 meses  - parcial',
+                    'EMEI da CEMEI',
+                    '6 a 7 meses - parcial',
+                    '7 meses',
+                    '0 a 5 meses',
+                    '6 meses',
+                    '4 a 6 anos - parcial',
+                    '2 a 3 anos - parcial',
+                    'Professor ',
+                    'Pro Jovem (filhos)',
+                    'Professor (jantar)',
+                    '2 a 6 anos',
+                    'Toda Idade',
+                    '6 a 7 meses',
+                    '2 a 3 anos',
+                    '0 a 1 mês',
+                    '4 a 5 meses',
+                    '8 a 11 meses',
+                    '1 ano - parcial',
+                    '1 a 3 meses',
+                    '4 a 6 anos',
+                    'Todas as idades',
+                    '1 ano']
 
     def __init__(self, platform, payload, conn):
         self.api_client = PratoAbertoApiClient()
         if platform == 'telegram':
             self.bot = TelegramBot(payload, conn)
-        self.current_flow = self.bot.get_current_flow()
 
     def process_flow(self):
-        flow = self.current_flow
+        flow = self.bot.get_current_flow()
         if not flow:
-            self._show_flow_options()
+            return self._show_flow_options()
 
         step = flow['step']
         flow_name = flow['flow_name']
 
         if flow_name == BotFlowEnum.NENHUM.value:
-            self._show_flow_options()
+            return self._show_flow_options()
+        elif flow_name == BotFlowEnum.QUAL_CARDAPIO.value:
+            return self._flow_qual_cardapio(step)
 
-        if flow_name == BotFlowEnum.QUAL_CARDAPIO.value:
-            self._flow_qual_cardapio(flow, step)
+    #
+    # Private
+    #
 
-    def _flow_qual_cardapio(self, flow, step):
+    # flows
+
+    def _flow_qual_cardapio(self, step):
         if step == self.STEP_BUSCA_ESCOLA:
             self.bot.send_message('Digite o nome da escola')
             escolas = self._get_escolas(self.bot.text)
@@ -206,16 +215,18 @@ class EduBot(object):
                 self.bot.send_message('Escolha o dia', self.days_options)
             elif self._is_day_option(self.bot.text):
                 self.bot.update_user_data(args={'menu_date': self._parse_date(self.bot.text)})
-                self._show_menu(flow)
-                self.bot.set_flow(BotFlowEnum.NENHUM.value, self.STEP_STEP_ZERO)
+                self._show_cardapio(self.bot.get_current_flow())  # atualizou os dados e tem que pegar novamente
             else:
                 self.bot.update_user_data(args={'school': self.bot.text})
                 idades = self.api_client.get_idades_by_escola_nome(self.bot.text)
                 if idades:
                     self.bot.send_message('Escolha uma idade', idades)
 
-    def _show_menu(self, flow):
-        """No final do fluxo, exibe o menu correspondente aos filtros"""
+    # commons
+
+    def _show_cardapio(self, flow):
+        """No final do fluxo, exibe o cardapio correspondente às opções escolhidas"""
+        print(flow, 'chegou no ')
         menu_date = flow.get('menu_date').strftime('%Y%m%d')
         school_name = flow.get('school')
         school = self.api_client.get_escolas_by_name(school_name)[0]
@@ -224,9 +235,23 @@ class EduBot(object):
             cardapio = self.api_client.get_cardapio(age=flow.get('age'),
                                                     menu_date=menu_date,
                                                     school=school_detailed)
-            print(cardapio)
-            self.bot.set_flow(BotFlowEnum.NENHUM.value, self.STEP_STEP_ZERO)
+            if cardapio:
+                self._print_cardapio(cardapio)
+            else:
+                self.bot.send_message('Não foi encontrado cardápio para o dia pesquisado, desculpe.')
+            self.bot.set_flow(BotFlowEnum.NENHUM.value, self.STEP_ZERO)
         self._show_flow_options()
+
+    def _print_cardapio(self, cardapio):
+        cardapio_str = ''
+        refeicoes = cardapio[0]['cardapio']
+        for refeicao in refeicoes:
+            cardapio_str += '{}:\n'.format(refeicao)
+            for comida in refeicoes[refeicao]:
+                cardapio_str += '- {}\n'.format(comida)
+
+        self.bot.send_message(cardapio_str)
+        self.bot.send_message('Obrigado por consultar!')
 
     def _show_flow_options(self):
         self.bot.send_message('Escolha uma das opções',
@@ -234,16 +259,8 @@ class EduBot(object):
                                BotFlowEnum.AVALIAR_REFEICAO.value,
                                BotFlowEnum.ASSINAR_NOTIFICACAO.value])
 
-    def fluxo_qual_cardapio(self):
-        self.bot.send_message('Digite o nome da escola que deseja')
-        self.bot.set_flow(BotFlowEnum.QUAL_CARDAPIO.value, 0)
-
-    #
-    # Private
-    #
-
     def _is_age_option(self, opt):
-        if opt in self.idades_options:
+        if opt in self.ages_options:
             return True
         return False
 
@@ -260,18 +277,9 @@ class EduBot(object):
                       'Ontem': today - datetime.timedelta(days=1)}
         return parse_dict.get(date_opt, today)
 
-    def _get_state(self):
-        pass
-
     def _get_escolas(self, name):
         """
-        Retorna array de escolas:
-        [
-        'marcelo maia',
-        'EMEI JOAO RUBENS MARCELO (TERC.)'
-        ]
-        onde vem o id do mongo e o nome da escola, sendo que
-        id é a mesma coisa que o codigo eol
+        Retorna array de nomes de escolas
         """
         retval = self.api_client.get_escolas_by_name(name)
         if retval:
