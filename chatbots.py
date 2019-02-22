@@ -90,12 +90,11 @@ class TelegramBot(BaseBot):
         return r.json()
 
     def create_user(self):
-        # XXX chat id do telegram é conflitante com o do facebook?
         query = {'_id': self.chat_id}
         user = self.conn.users.find_one(query)
         if not user:
             user_info = {
-                'nome': self.chat_name,
+                'name': self.chat_name,
                 'source': 'telegram'
             }
             self.conn.users.update_one(query, {'$set': user_info}, upsert=True)
@@ -207,25 +206,27 @@ class EduBot(object):
                 self.bot.send_message('Escolha o dia', self.days_options)
             elif self._is_day_option(self.bot.text):
                 self.bot.update_user_data(args={'menu_date': self._parse_date(self.bot.text)})
-                self.bot.set_flow(BotFlowEnum.QUAL_CARDAPIO.value, self.STEP_RETORNA_CARDAPIO)
+                self._show_menu(flow)
+                self.bot.set_flow(BotFlowEnum.NENHUM.value, self.STEP_STEP_ZERO)
             else:
                 self.bot.update_user_data(args={'school': self.bot.text})
                 idades = self.api_client.get_idades_by_escola_nome(self.bot.text)
                 if idades:
                     self.bot.send_message('Escolha uma idade', idades)
-        elif step == self.STEP_RETORNA_CARDAPIO:
-            school_name = flow.get('school')
-            school = self.api_client.get_escolas_by_name(school_name)[0]
-            menu_date = flow.get('menu_date').strftime('%Y%M%d')
-            query_args = {
-                'idade': flow.get('age'),
-                'data_inicial': menu_date,
-                'data_final': menu_date
-            }
-            cardapio = self.api_client.get_cardapio(cod_eol=school['_id'], query_args=query_args)
+
+    def _show_menu(self, flow):
+        """No final do fluxo, exibe o menu correspondente aos filtros"""
+        menu_date = flow.get('menu_date').strftime('%Y%m%d')
+        school_name = flow.get('school')
+        school = self.api_client.get_escolas_by_name(school_name)[0]
+        if school:
+            school_detailed = self.api_client.get_escola_by_eol_code(school['_id'])
+            cardapio = self.api_client.get_cardapio(age=flow.get('age'),
+                                                    menu_date=menu_date,
+                                                    school=school_detailed)
             print(cardapio)
             self.bot.set_flow(BotFlowEnum.NENHUM.value, self.STEP_STEP_ZERO)
-            self._show_flow_options()
+        self._show_flow_options()
 
     def _show_flow_options(self):
         self.bot.send_message('Escolha uma das opções',
@@ -275,15 +276,4 @@ class EduBot(object):
         retval = self.api_client.get_escolas_by_name(name)
         if retval:
             retval = [p['nome'] for p in retval]
-        return retval
-
-    def _escolhe_escola(self, escolas):
-        print('Escolha uma das escolas pela numeração\n')
-        for escola in escolas:
-            print('{} - {}'.format(escola['_id'], escola['nome']))
-        eol = input('Escolha uma escola\n')
-        retval = None
-        for escola in escolas:
-            if eol == str(escola['_id']):
-                retval = escola
         return retval
