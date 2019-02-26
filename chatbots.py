@@ -56,6 +56,7 @@ class TelegramBot(BaseBot):
     """
 
     def __init__(self, payload, conn):
+        print('payload', payload)
         super().__init__(payload, conn)
         TG_URL = 'https://api.telegram.org/bot{}/'.format(os.environ.get('TG_TOKEN'))
         self.TG_BASE_MESSAGE_URL = TG_URL + 'sendMessage?chat_id={}&text={}&parse_mode=Markdown'
@@ -171,7 +172,7 @@ class EduBot(object):
     (2) Trata fluxo
     (3) Pergunta pro objeto específico os dados da sua respectiva plataforma
     """
-    STEP_BUSCA_ESCOLA, STEP_ESCOLA_ESCOLHIDA, STEP_RETORNA_CARDAPIO = range(3)
+    STEP_BUSCA_ESCOLA, STEP_ESCOLA_ESCOLHIDA, STEP_BUSCA_ESCOLA2 = range(3)
     STEP_ZERO = 0
 
     days_options = ['Hoje', 'Amanhã', 'Ontem']
@@ -237,6 +238,9 @@ class EduBot(object):
 
     def _base_cardapio_flow(self, current_flow, step):
         if step == self.STEP_BUSCA_ESCOLA:
+            self.bot.send_message('Digite o nome da escola')
+            self.bot.set_flow(current_flow, self.STEP_BUSCA_ESCOLA2)
+        elif step == self.STEP_BUSCA_ESCOLA2:
             self._busca_escola(current_flow)
         elif step == self.STEP_ESCOLA_ESCOLHIDA:
             if self._is_age_option(self.bot.text):
@@ -260,11 +264,13 @@ class EduBot(object):
         self._main_menu()
 
     def _busca_escola(self, current_flow):
-        self.bot.send_message('Digite o nome da escola')
         escolas = self._get_escolas(self.bot.text)
         if escolas:
             self.bot.set_flow(current_flow, step=self.STEP_ESCOLA_ESCOLHIDA)
             self.bot.send_message('Escolha uma escola', escolas)
+        else:
+            self.bot.send_message('Nenhuma escola encontrada')
+            self._main_menu()
 
     def _flow_assina_notificacao(self, step):
         current_flow = BotFlowEnum.RECEBER_NOTIFICACAO.value
