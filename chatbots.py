@@ -34,7 +34,7 @@ class BaseBot(object):
     def set_flow(self, flow_name, step):
         raise NotImplementedError
 
-    def get_current_flow(self):
+    def get_user_data(self):
         raise NotImplementedError
 
 
@@ -92,7 +92,7 @@ class TelegramBot(BaseBot):
             self._create_user()
         self.conn.users.update_one(query, {'$set': args}, upsert=True)
 
-    def get_current_flow(self):
+    def get_user_data(self):
         """Retorna um dict com os dados do usuário ou nada"""
         query = {'_id': self.chat_id}
         user = self.conn.users.find_one(query)
@@ -188,12 +188,14 @@ class EduBot(object):
             self.bot = TelegramBot(payload, conn)
 
     def process_flow(self):
-        flow = self.bot.get_current_flow()
-        if not flow:
+        user_data = self.bot.get_user_data()
+        if not user_data:
+            return self._show_flow_options()
+        if not user_data.get('step', None) or not user_data.get('flow_name', None):
             return self._show_flow_options()
 
-        step = flow['step']
-        flow_name = flow['flow_name']
+        step = user_data['step']
+        flow_name = user_data['flow_name']
 
         if flow_name == BotFlowEnum.NENHUM.value:
             return self._show_flow_options()
@@ -219,7 +221,7 @@ class EduBot(object):
                 self.bot.send_message('Escolha o dia', self.days_options)
             elif self._is_day_option(self.bot.text):
                 self.bot.update_user_data(args={'menu_date': self._parse_date(self.bot.text)})
-                self._show_cardapio(self.bot.get_current_flow())  # atualizou os dados e tem que pegar novamente
+                self._show_cardapio(self.bot.get_user_data())  # atualizou os dados e tem que pegar novamente
             else:
                 self.bot.update_user_data(args={'school': self.bot.text})
                 idades = self.api_client.get_idades_by_escola_nome(self.bot.text)
