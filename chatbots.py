@@ -191,7 +191,7 @@ class EduBot(object):
         user_data = self.bot.get_user_data()
         if not user_data:
             return self._show_flow_options()
-        if not user_data.get('step', None) or not user_data.get('flow_name', None):
+        if not user_data.get('step', None) and not user_data.get('flow_name', None):
             return self._show_flow_options()
 
         step = user_data['step']
