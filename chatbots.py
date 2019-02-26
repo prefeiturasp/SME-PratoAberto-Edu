@@ -216,7 +216,7 @@ class EduBot(object):
         if flow_name == BotFlowEnum.NENHUM.value:
             return self._main_menu()
         elif flow_name == BotFlowEnum.QUAL_CARDAPIO.value:
-            return self._flow_qual_cardapio(step)
+            return self._flow_search_menu(step)
         elif flow_name == BotFlowEnum.AVALIAR_REFEICAO.value:
             return self._flow_evaluate_meal(step)
         elif flow_name == BotFlowEnum.RECEBER_NOTIFICACAO.value:
@@ -228,7 +228,7 @@ class EduBot(object):
 
     # flows
 
-    def _flow_qual_cardapio(self, step):
+    def _flow_search_menu(self, step):
         current_flow = BotFlowEnum.QUAL_CARDAPIO.value
         self._base_cardapio_flow(current_flow, step)
 
@@ -252,7 +252,7 @@ class EduBot(object):
                     self._flow_evaluate_meal(self.STEP_MENU_SHOWN)
             else:
                 self.bot.update_user_data(args={'school': self.bot.text})
-                idades = self.api_client.get_idades_by_escola_nome(self.bot.text)
+                idades = self.api_client.get_ages_by_school_nome(self.bot.text)
                 if idades:
                     self.bot.send_message('Escolha uma idade', idades)
 
@@ -288,7 +288,7 @@ class EduBot(object):
                 self._main_menu()
             else:
                 self.bot.update_user_data(args={'school': self.bot.text})
-                idades = self.api_client.get_idades_by_escola_nome(self.bot.text)
+                idades = self.api_client.get_ages_by_school_nome(self.bot.text)
                 if idades:
                     self.bot.send_message('Escolha uma idade', idades)
 
@@ -297,12 +297,12 @@ class EduBot(object):
     def _show_menu(self, user_data):
         menu_date = user_data.get('menu_date').strftime('%Y%m%d')
         school_name = user_data.get('school')
-        school = self.api_client.get_escolas_by_name(school_name)[0]
+        school = self.api_client.get_schools_by_name(school_name)[0]
         if school:
-            school_detailed = self.api_client.get_escola_by_eol_code(school['_id'])
-            menu = self.api_client.get_cardapio(age=user_data.get('age'),
-                                                menu_date=menu_date,
-                                                school=school_detailed)
+            school_detailed = self.api_client.get_school_by_eol_code(school['_id'])
+            menu = self.api_client.get_menu(age=user_data.get('age'),
+                                            menu_date=menu_date,
+                                            school=school_detailed)
             if menu:
                 self._print_menu(menu)
             else:
@@ -351,7 +351,7 @@ class EduBot(object):
         :param name: school name
         :return: array of str
         """
-        retval = self.api_client.get_escolas_by_name(name)
+        retval = self.api_client.get_schools_by_name(name)
         if retval:
             retval = [p['nome'] for p in retval]
         return retval
