@@ -275,11 +275,15 @@ class EduBot(object):
     def _flow_assina_notificacao(self, step):
         current_flow = BotFlowEnum.RECEBER_NOTIFICACAO.value
         if step == self.STEP_BUSCA_ESCOLA:
+            self.bot.send_message('Digite o nome da escola')
+            self.bot.set_flow(current_flow, self.STEP_BUSCA_ESCOLA2)
+        elif step == self.STEP_BUSCA_ESCOLA2:
             self._busca_escola(current_flow)
         elif step == self.STEP_ESCOLA_ESCOLHIDA:
             if self._is_age_option(self.bot.text):
                 self.bot.update_user_data(args={'age': self.bot.text})
                 self.bot.save_notification()
+                self.bot.send_message('Sua notificação foi salva!')
                 self._main_menu()
             else:
                 self.bot.update_user_data(args={'school': self.bot.text})
