@@ -220,6 +220,8 @@ class EduBot(object):
             return self._main_menu()
         elif flow_name == BotFlowEnum.QUAL_CARDAPIO.value:
             return self._flow_qual_cardapio(step)
+        elif flow_name == BotFlowEnum.AVALIAR_REFEICAO.value:
+            return self._flow_avaliar_refeicao(step)
         elif flow_name == BotFlowEnum.RECEBER_NOTIFICACAO.value:
             return self._flow_assina_notificacao(step)
 
@@ -231,6 +233,9 @@ class EduBot(object):
 
     def _flow_qual_cardapio(self, step):
         current_flow = BotFlowEnum.QUAL_CARDAPIO.value
+        self._base_cardapio_flow(current_flow, step)
+
+    def _base_cardapio_flow(self, current_flow, step):
         if step == self.STEP_BUSCA_ESCOLA:
             self._busca_escola(current_flow)
         elif step == self.STEP_ESCOLA_ESCOLHIDA:
@@ -240,12 +245,19 @@ class EduBot(object):
             elif self._is_day_option(self.bot.text):
                 self.bot.update_user_data(args={'menu_date': self._parse_date(self.bot.text)})
                 self._show_cardapio(self.bot.get_user_data())
-                self._main_menu()
+                if current_flow == BotFlowEnum.QUAL_CARDAPIO.value:
+                    self._main_menu()
             else:
                 self.bot.update_user_data(args={'school': self.bot.text})
                 idades = self.api_client.get_idades_by_escola_nome(self.bot.text)
                 if idades:
                     self.bot.send_message('Escolha uma idade', idades)
+
+    def _flow_avaliar_refeicao(self, step):
+        current_flow = BotFlowEnum.AVALIAR_REFEICAO.value
+        self._base_cardapio_flow(current_flow, step)
+        print('checkpoint da avaliação do robo')
+        self._main_menu()
 
     def _busca_escola(self, current_flow):
         self.bot.send_message('Digite o nome da escola')
