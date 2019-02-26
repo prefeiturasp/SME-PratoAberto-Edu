@@ -51,11 +51,11 @@ class TelegramBot(BaseBot):
         'date': 1550693882, 'text': 'marcelus'}
         }
     """
-    TG_URL = 'https://api.telegram.org/bot{}/'.format(os.environ.get('TG_TOKEN'))
-    TG_BASE_MESSAGE_URL = TG_URL + 'sendMessage?chat_id={}&text={}&parse_mode=Markdown'
 
     def __init__(self, payload, conn):
         super().__init__(payload, conn)
+        TG_URL = 'https://api.telegram.org/bot{}/'.format(os.environ.get('TG_TOKEN'))
+        self.TG_BASE_MESSAGE_URL = TG_URL + 'sendMessage?chat_id={}&text={}&parse_mode=Markdown'
         self.chat_id = payload['message']['chat']['id']
         self.text = payload['message']['text'].strip()
         self.chat_name = payload['message']['chat']['first_name']
