@@ -43,20 +43,11 @@ class BaseBot(object):
 
 class TelegramBot(BaseBot):
     """
-        https://api.telegram.org/bot<YOURTOKEN>/setWebhook  (para gerar webhook)
-        https://api.telegram.org/bot780759709:AAGP1IigPhGtBqiIKK-dBaageSSOjq68mvM/setWebhook
-        > ativar webhook
-        curl -F "url=https://lepidus.serveo.net/telegram" https://api.telegram.org/bot780759709:AAGP1IigPhGtBqiIKK-dBaageSSOjq68mvM/setWebhook
-
-        {'update_id': 458880384,
-        'message': {'message_id': 6, 'from': {'id': 105113137, 'is_bot': False,'first_name': 'Marcelo', 'last_name': 'Maia', 'username': 'MarceloMaiaa', 'language_code': 'pt-br'},
-        'chat': {'id': 105113137, 'first_name': 'Marcelo', 'last_name': 'Maia', 'username': 'MarceloMaiaa', 'type': 'private'},
-        'date': 1550693882, 'text': 'marcelus'}
-        }
+        Handles data related to telegram.
+        It doesnt handle states
     """
 
     def __init__(self, payload, conn):
-        print('payload', payload)
         super().__init__(payload, conn)
         TG_URL = 'https://api.telegram.org/bot{}/'.format(os.environ.get('TG_TOKEN'))
         self.TG_BASE_MESSAGE_URL = TG_URL + 'sendMessage?chat_id={}&text={}&parse_mode=Markdown'
@@ -67,9 +58,10 @@ class TelegramBot(BaseBot):
 
     def send_message(self, text, keyboard_opts=None):
         """
-        :param chat_id:
-        :param text:
-        :param keyboard_opts: array of txt
+        Creates a url with text and buttons
+
+        :param text: text
+        :param keyboard_opts: array of string
         :return:
         """
         text = urllib.parse.quote_plus(text)
@@ -90,17 +82,6 @@ class TelegramBot(BaseBot):
         if user_data:
             self._create_notification(user_data)
 
-    def _create_notification(self, user_data):
-        query = {'_id': self.chat_id}
-        age = user_data['age']
-        school = user_data['school']
-        flow_name = user_data['flow_name']
-        args = {'age': age,
-                'school': school,
-                'source': 'telegram'}
-        assert flow_name == BotFlowEnum.RECEBER_NOTIFICACAO.value
-        self.conn.notifications.update_one(query, {'$set': args}, upsert=True)
-
     def update_user_data(self, args):
         """
         Generic method, to update or create fields in user collection
@@ -113,7 +94,9 @@ class TelegramBot(BaseBot):
         self.conn.users.update_one(query, {'$set': args}, upsert=True)
 
     def get_user_data(self):
-        """Retorna um dict com os dados do usuário ou nada"""
+        """
+        :return: dict
+        """
         query = {'_id': self.chat_id}
         user = self.conn.users.find_one(query)
         return user
@@ -133,9 +116,19 @@ class TelegramBot(BaseBot):
     # Private
     #
 
+    def _create_notification(self, user_data):
+        query = {'_id': self.chat_id}
+        age = user_data['age']
+        school = user_data['school']
+        flow_name = user_data['flow_name']
+        args = {'age': age,
+                'school': school,
+                'source': 'telegram'}
+        assert flow_name == BotFlowEnum.RECEBER_NOTIFICACAO.value
+        self.conn.notifications.update_one(query, {'$set': args}, upsert=True)
+
     def _check_flow(self):
-        """Caso o txt recebido seja um dos status iniciais, volta para o começo,
-        Serve também como uma inicialização para uma nova conversa."""
+        """if text is equal to initial statuses, them back to begin."""
         if self.text in [BotFlowEnum.QUAL_CARDAPIO.value,
                          BotFlowEnum.AVALIAR_REFEICAO.value,
                          BotFlowEnum.RECEBER_NOTIFICACAO.value]:
@@ -164,15 +157,18 @@ class TelegramBot(BaseBot):
 
 
 class EduBot(object):
-    """Faz pesquisas em comum entre os dois mensageiros
-    Planos futuros: usar maquina de estados para cada conversa
+    """Handles states
+    Future plan: use a high level state machine
     https://github.com/pytransitions/transitions
 
-    (1) Recebe payloads e instancia o bot adequado de acordo com a plataforma
-    (2) Trata fluxo
-    (3) Pergunta pro objeto específico os dados da sua respectiva plataforma
+    (1) Receives payloads and loads platform related class
+    (2) Handles states
     """
-    STEP_BUSCA_ESCOLA, STEP_ESCOLA_ESCOLHIDA, STEP_BUSCA_ESCOLA2 = range(3)
+    (STEP_SEARCH_SCHOOL,
+     STEP_SCHOOL_SELECTED,
+     STEP_SEARCH_SCHOOL2,
+     STEP_MENU_SHOWN) = range(4)
+
     STEP_ZERO = 0
 
     days_options = ['Hoje', 'Amanhã', 'Ontem']
@@ -222,9 +218,9 @@ class EduBot(object):
         elif flow_name == BotFlowEnum.QUAL_CARDAPIO.value:
             return self._flow_qual_cardapio(step)
         elif flow_name == BotFlowEnum.AVALIAR_REFEICAO.value:
-            return self._flow_avaliar_refeicao(step)
+            return self._flow_evaluate_meal(step)
         elif flow_name == BotFlowEnum.RECEBER_NOTIFICACAO.value:
-            return self._flow_assina_notificacao(step)
+            return self._flow_meal_alert(step)
 
     #
     # Private
@@ -237,49 +233,54 @@ class EduBot(object):
         self._base_cardapio_flow(current_flow, step)
 
     def _base_cardapio_flow(self, current_flow, step):
-        if step == self.STEP_BUSCA_ESCOLA:
+        if step == self.STEP_SEARCH_SCHOOL:
             self.bot.send_message('Digite o nome da escola')
-            self.bot.set_flow(current_flow, self.STEP_BUSCA_ESCOLA2)
-        elif step == self.STEP_BUSCA_ESCOLA2:
-            self._busca_escola(current_flow)
-        elif step == self.STEP_ESCOLA_ESCOLHIDA:
+            self.bot.set_flow(current_flow, self.STEP_SEARCH_SCHOOL2)
+        elif step == self.STEP_SEARCH_SCHOOL2:
+            self._search_school(current_flow)
+        elif step == self.STEP_SCHOOL_SELECTED:
             if self._is_age_option(self.bot.text):
                 self.bot.update_user_data(args={'age': self.bot.text})
                 self.bot.send_message('Escolha o dia', self.days_options)
             elif self._is_day_option(self.bot.text):
                 self.bot.update_user_data(args={'menu_date': self._parse_date(self.bot.text)})
-                self._show_cardapio(self.bot.get_user_data())
+                self._show_menu(self.bot.get_user_data())
                 if current_flow == BotFlowEnum.QUAL_CARDAPIO.value:
                     self._main_menu()
+                elif current_flow == BotFlowEnum.AVALIAR_REFEICAO.value:
+                    self.bot.set_flow(current_flow, self.STEP_MENU_SHOWN)
+                    self._flow_evaluate_meal(self.STEP_MENU_SHOWN)
             else:
                 self.bot.update_user_data(args={'school': self.bot.text})
                 idades = self.api_client.get_idades_by_escola_nome(self.bot.text)
                 if idades:
                     self.bot.send_message('Escolha uma idade', idades)
 
-    def _flow_avaliar_refeicao(self, step):
+    def _flow_evaluate_meal(self, step):
         current_flow = BotFlowEnum.AVALIAR_REFEICAO.value
-        self._base_cardapio_flow(current_flow, step)
-        print('checkpoint da avaliação do robo')
-        self._main_menu()
+        if step == self.STEP_MENU_SHOWN:
+            print('cardapio mostrado! agora deve começar a avaliação...')
+            self._main_menu()
 
-    def _busca_escola(self, current_flow):
-        escolas = self._get_escolas(self.bot.text)
-        if escolas:
-            self.bot.set_flow(current_flow, step=self.STEP_ESCOLA_ESCOLHIDA)
-            self.bot.send_message('Escolha uma escola', escolas)
+        self._base_cardapio_flow(current_flow, step)
+
+    def _search_school(self, current_flow):
+        schools = self._get_schools_by_name(self.bot.text)
+        if schools:
+            self.bot.set_flow(current_flow, step=self.STEP_SCHOOL_SELECTED)
+            self.bot.send_message('Escolha uma escola', schools)
         else:
             self.bot.send_message('Nenhuma escola encontrada')
             self._main_menu()
 
-    def _flow_assina_notificacao(self, step):
+    def _flow_meal_alert(self, step):
         current_flow = BotFlowEnum.RECEBER_NOTIFICACAO.value
-        if step == self.STEP_BUSCA_ESCOLA:
+        if step == self.STEP_SEARCH_SCHOOL:
             self.bot.send_message('Digite o nome da escola')
-            self.bot.set_flow(current_flow, self.STEP_BUSCA_ESCOLA2)
-        elif step == self.STEP_BUSCA_ESCOLA2:
-            self._busca_escola(current_flow)
-        elif step == self.STEP_ESCOLA_ESCOLHIDA:
+            self.bot.set_flow(current_flow, self.STEP_SEARCH_SCHOOL2)
+        elif step == self.STEP_SEARCH_SCHOOL2:
+            self._search_school(current_flow)
+        elif step == self.STEP_SCHOOL_SELECTED:
             if self._is_age_option(self.bot.text):
                 self.bot.update_user_data(args={'age': self.bot.text})
                 self.bot.save_notification()
@@ -293,22 +294,21 @@ class EduBot(object):
 
     # commons
 
-    def _show_cardapio(self, flow):
-        """No final do fluxo, exibe o cardapio correspondente às opções escolhidas"""
-        menu_date = flow.get('menu_date').strftime('%Y%m%d')
-        school_name = flow.get('school')
+    def _show_menu(self, user_data):
+        menu_date = user_data.get('menu_date').strftime('%Y%m%d')
+        school_name = user_data.get('school')
         school = self.api_client.get_escolas_by_name(school_name)[0]
         if school:
             school_detailed = self.api_client.get_escola_by_eol_code(school['_id'])
-            cardapio = self.api_client.get_cardapio(age=flow.get('age'),
-                                                    menu_date=menu_date,
-                                                    school=school_detailed)
-            if cardapio:
-                self._print_cardapio(cardapio)
+            menu = self.api_client.get_cardapio(age=user_data.get('age'),
+                                                menu_date=menu_date,
+                                                school=school_detailed)
+            if menu:
+                self._print_menu(menu)
             else:
                 self.bot.send_message('Não foi encontrado cardápio para o dia pesquisado, desculpe.')
 
-    def _print_cardapio(self, cardapio):
+    def _print_menu(self, cardapio):
         cardapio_str = ''
         refeicoes = cardapio[0]['cardapio']
         for refeicao in refeicoes:
@@ -336,16 +336,20 @@ class EduBot(object):
         return False
 
     def _parse_date(self, date_opt):
-        """Passa string Hoje, Amanhã ou Ontem para date"""
+        """
+        parse specific str to datetime
+        """
         today = datetime.datetime.today()
         parse_dict = {'Hoje': today,
                       'Amanhã': today + datetime.timedelta(days=1),
                       'Ontem': today - datetime.timedelta(days=1)}
         return parse_dict.get(date_opt, today)
 
-    def _get_escolas(self, name):
+    def _get_schools_by_name(self, name):
         """
-        Retorna array de nomes de escolas
+
+        :param name: school name
+        :return: array of str
         """
         retval = self.api_client.get_escolas_by_name(name)
         if retval:
