@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 class BotFlowEnum(Enum):
     QUAL_CARDAPIO = "Qual o cardápio?"
     AVALIAR_REFEICAO = "Avaliar refeição"
-    RECEBER_NOTIFICACAO = 'Receber Notificações'
+    RECEBER_NOTIFICACAO = 'Receber notificações'
     NENHUM = 'Nenhum'
 
 
@@ -37,7 +37,7 @@ class BaseBot(object):
     def get_user_data(self):
         raise NotImplementedError
 
-    def save_notificacao(self):
+    def save_notification(self):
         raise NotImplementedError
 
 
@@ -84,12 +84,21 @@ class TelegramBot(BaseBot):
 
         return r.json()
 
-    def save_notificacao(self):
+    def save_notification(self):
         user_data = self.get_user_data()
         if user_data:
-            a = {'_id': 105113137, 'name': 'Marcelo', 'source': 'telegram', 'flow_name': 'Receber Notificações', 'step': 1,
-             'school': 'EMEI CELIA CAMARGO PENTEADO ELIAS, PROFA. (TERC.)', 'age': 'Todas as idades',
-             'menu_date': datetime.datetime(2019, 2, 26, 12, 39, 38, 440000)}
+            self._create_notification(user_data)
+
+    def _create_notification(self, user_data):
+        query = {'_id': self.chat_id}
+        age = user_data['age']
+        school = user_data['school']
+        flow_name = user_data['flow_name']
+        args = {'age': age,
+                'school': school,
+                'source': 'telegram'}
+        assert flow_name == BotFlowEnum.RECEBER_NOTIFICACAO.value
+        self.conn.notifications.update_one(query, {'$set': args}, upsert=True)
 
     def update_user_data(self, args):
         """
@@ -252,8 +261,7 @@ class EduBot(object):
         elif step == self.STEP_ESCOLA_ESCOLHIDA:
             if self._is_age_option(self.bot.text):
                 self.bot.update_user_data(args={'age': self.bot.text})
-                user_data = self.bot.get_user_data()
-                print('user data assina notificação: {}'.format(user_data))
+                self.bot.save_notification()
                 self._main_menu()
             else:
                 self.bot.update_user_data(args={'school': self.bot.text})
