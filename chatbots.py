@@ -230,9 +230,9 @@ class EduBot(object):
 
     def _flow_search_menu(self, step):
         current_flow = BotFlowEnum.QUAL_CARDAPIO.value
-        self._base_cardapio_flow(current_flow, step)
+        self._base_menu_flow(current_flow, step)
 
-    def _base_cardapio_flow(self, current_flow, step):
+    def _base_menu_flow(self, current_flow, step):
         if step == self.STEP_SEARCH_SCHOOL:
             self.bot.send_message('Digite o nome da escola')
             self.bot.set_flow(current_flow, self.STEP_SEARCH_SCHOOL2)
@@ -240,38 +240,19 @@ class EduBot(object):
             self._search_school(current_flow)
         elif step == self.STEP_SCHOOL_SELECTED:
             if self._is_age_option(self.bot.text):
-                self.bot.update_user_data(args={'age': self.bot.text})
-                self.bot.send_message('Escolha o dia', self.days_options)
+                self._school_selected_parse_age()
             elif self._is_day_option(self.bot.text):
-                self.bot.update_user_data(args={'menu_date': self._parse_date(self.bot.text)})
-                self._show_menu(self.bot.get_user_data())
-                if current_flow == BotFlowEnum.QUAL_CARDAPIO.value:
-                    self._main_menu()
-                elif current_flow == BotFlowEnum.AVALIAR_REFEICAO.value:
-                    self.bot.set_flow(current_flow, self.STEP_MENU_SHOWN)
-                    self._flow_evaluate_meal(self.STEP_MENU_SHOWN)
+                self._school_selected_parse_day(current_flow)
             else:
-                self.bot.update_user_data(args={'school': self.bot.text})
-                idades = self.api_client.get_ages_by_school_nome(self.bot.text)
-                if idades:
-                    self.bot.send_message('Escolha uma idade', idades)
+                self._school_selected_get_ages()
 
     def _flow_evaluate_meal(self, step):
         current_flow = BotFlowEnum.AVALIAR_REFEICAO.value
         if step == self.STEP_MENU_SHOWN:
-            print('cardapio mostrado! agora deve começar a avaliação...')
+            self.bot.send_message('FALTA UM PEDAÇO PRA FRENTE, OBRIGADO PELA ATENÇÃO!')
             self._main_menu()
 
-        self._base_cardapio_flow(current_flow, step)
-
-    def _search_school(self, current_flow):
-        schools = self._get_schools_by_name(self.bot.text)
-        if schools:
-            self.bot.set_flow(current_flow, step=self.STEP_SCHOOL_SELECTED)
-            self.bot.send_message('Escolha uma escola', schools)
-        else:
-            self.bot.send_message('Nenhuma escola encontrada')
-            self._main_menu()
+        self._base_menu_flow(current_flow, step)
 
     def _flow_meal_alert(self, step):
         current_flow = BotFlowEnum.RECEBER_NOTIFICACAO.value
@@ -287,10 +268,7 @@ class EduBot(object):
                 self.bot.send_message('Sua notificação foi salva!')
                 self._main_menu()
             else:
-                self.bot.update_user_data(args={'school': self.bot.text})
-                idades = self.api_client.get_ages_by_school_nome(self.bot.text)
-                if idades:
-                    self.bot.send_message('Escolha uma idade', idades)
+                self._school_selected_get_ages()
 
     # commons
 
@@ -317,7 +295,6 @@ class EduBot(object):
                 cardapio_str += '- {}\n'.format(comida)
 
         self.bot.send_message(cardapio_str)
-        self.bot.send_message('Obrigado por consultar!')
 
     def _main_menu(self):
         self.bot.send_message('Bem vindo ao EduBot! Por favor, escolha uma das opções',
@@ -355,3 +332,31 @@ class EduBot(object):
         if retval:
             retval = [p['nome'] for p in retval]
         return retval
+
+    def _school_selected_parse_age(self):
+        self.bot.update_user_data(args={'age': self.bot.text})
+        self.bot.send_message('Escolha o dia', self.days_options)
+
+    def _school_selected_parse_day(self, current_flow):
+        self.bot.update_user_data(args={'menu_date': self._parse_date(self.bot.text)})
+        self._show_menu(self.bot.get_user_data())
+        if current_flow == BotFlowEnum.QUAL_CARDAPIO.value:
+            self._main_menu()
+        elif current_flow == BotFlowEnum.AVALIAR_REFEICAO.value:
+            self.bot.set_flow(current_flow, self.STEP_MENU_SHOWN)
+            self._flow_evaluate_meal(self.STEP_MENU_SHOWN)
+
+    def _school_selected_get_ages(self):
+        self.bot.update_user_data(args={'school': self.bot.text})
+        ages = self.api_client.get_ages_by_school_nome(self.bot.text)
+        if ages:
+            self.bot.send_message('Escolha uma idade', ages)
+
+    def _search_school(self, current_flow):
+        schools = self._get_schools_by_name(self.bot.text)
+        if schools:
+            self.bot.set_flow(current_flow, step=self.STEP_SCHOOL_SELECTED)
+            self.bot.send_message('Escolha uma escola', schools)
+        else:
+            self.bot.send_message('Nenhuma escola encontrada')
+            self._main_menu()
