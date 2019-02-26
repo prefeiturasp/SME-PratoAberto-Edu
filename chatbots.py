@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 class BotFlowEnum(Enum):
     QUAL_CARDAPIO = "Qual o cardápio?"
     AVALIAR_REFEICAO = "Avaliar refeição"
-    ASSINAR_NOTIFICACAO = 'Assinar notificação'
+    RECEBER_NOTIFICACAO = 'Receber Notificações'
     NENHUM = 'Nenhum'
 
 
@@ -35,6 +35,9 @@ class BaseBot(object):
         raise NotImplementedError
 
     def get_user_data(self):
+        raise NotImplementedError
+
+    def save_notificacao(self):
         raise NotImplementedError
 
 
@@ -81,6 +84,13 @@ class TelegramBot(BaseBot):
 
         return r.json()
 
+    def save_notificacao(self):
+        user_data = self.get_user_data()
+        if user_data:
+            a = {'_id': 105113137, 'name': 'Marcelo', 'source': 'telegram', 'flow_name': 'Receber Notificações', 'step': 1,
+             'school': 'EMEI CELIA CAMARGO PENTEADO ELIAS, PROFA. (TERC.)', 'age': 'Todas as idades',
+             'menu_date': datetime.datetime(2019, 2, 26, 12, 39, 38, 440000)}
+
     def update_user_data(self, args):
         """
         Generic method, to update or create fields in user collection
@@ -118,7 +128,7 @@ class TelegramBot(BaseBot):
         Serve também como uma inicialização para uma nova conversa."""
         if self.text in [BotFlowEnum.QUAL_CARDAPIO.value,
                          BotFlowEnum.AVALIAR_REFEICAO.value,
-                         BotFlowEnum.ASSINAR_NOTIFICACAO.value]:
+                         BotFlowEnum.RECEBER_NOTIFICACAO.value]:
             self._reset_flow(self.text)
 
     def _reset_flow(self, text):
@@ -190,17 +200,19 @@ class EduBot(object):
     def process_flow(self):
         user_data = self.bot.get_user_data()
         if not user_data:
-            return self._show_flow_options()
+            return self._main_menu()
         if not user_data.get('step', None) and not user_data.get('flow_name', None):
-            return self._show_flow_options()
+            return self._main_menu()
 
         step = user_data['step']
         flow_name = user_data['flow_name']
 
         if flow_name == BotFlowEnum.NENHUM.value:
-            return self._show_flow_options()
+            return self._main_menu()
         elif flow_name == BotFlowEnum.QUAL_CARDAPIO.value:
             return self._flow_qual_cardapio(step)
+        elif flow_name == BotFlowEnum.RECEBER_NOTIFICACAO.value:
+            return self._flow_assina_notificacao(step)
 
     #
     # Private
@@ -209,19 +221,40 @@ class EduBot(object):
     # flows
 
     def _flow_qual_cardapio(self, step):
+        current_flow = BotFlowEnum.QUAL_CARDAPIO.value
         if step == self.STEP_BUSCA_ESCOLA:
-            self.bot.send_message('Digite o nome da escola')
-            escolas = self._get_escolas(self.bot.text)
-            if escolas:
-                self.bot.set_flow(BotFlowEnum.QUAL_CARDAPIO.value, step=self.STEP_ESCOLA_ESCOLHIDA)
-                self.bot.send_message('Escolha uma escola', escolas)
+            self._busca_escola(current_flow)
         elif step == self.STEP_ESCOLA_ESCOLHIDA:
             if self._is_age_option(self.bot.text):
                 self.bot.update_user_data(args={'age': self.bot.text})
                 self.bot.send_message('Escolha o dia', self.days_options)
             elif self._is_day_option(self.bot.text):
                 self.bot.update_user_data(args={'menu_date': self._parse_date(self.bot.text)})
-                self._show_cardapio(self.bot.get_user_data())  # atualizou os dados e tem que pegar novamente
+                self._show_cardapio(self.bot.get_user_data())
+                self._main_menu()
+            else:
+                self.bot.update_user_data(args={'school': self.bot.text})
+                idades = self.api_client.get_idades_by_escola_nome(self.bot.text)
+                if idades:
+                    self.bot.send_message('Escolha uma idade', idades)
+
+    def _busca_escola(self, current_flow):
+        self.bot.send_message('Digite o nome da escola')
+        escolas = self._get_escolas(self.bot.text)
+        if escolas:
+            self.bot.set_flow(current_flow, step=self.STEP_ESCOLA_ESCOLHIDA)
+            self.bot.send_message('Escolha uma escola', escolas)
+
+    def _flow_assina_notificacao(self, step):
+        current_flow = BotFlowEnum.RECEBER_NOTIFICACAO.value
+        if step == self.STEP_BUSCA_ESCOLA:
+            self._busca_escola(current_flow)
+        elif step == self.STEP_ESCOLA_ESCOLHIDA:
+            if self._is_age_option(self.bot.text):
+                self.bot.update_user_data(args={'age': self.bot.text})
+                user_data = self.bot.get_user_data()
+                print('user data assina notificação: {}'.format(user_data))
+                self._main_menu()
             else:
                 self.bot.update_user_data(args={'school': self.bot.text})
                 idades = self.api_client.get_idades_by_escola_nome(self.bot.text)
@@ -232,7 +265,6 @@ class EduBot(object):
 
     def _show_cardapio(self, flow):
         """No final do fluxo, exibe o cardapio correspondente às opções escolhidas"""
-        print(flow, 'chegou no ')
         menu_date = flow.get('menu_date').strftime('%Y%m%d')
         school_name = flow.get('school')
         school = self.api_client.get_escolas_by_name(school_name)[0]
@@ -245,8 +277,6 @@ class EduBot(object):
                 self._print_cardapio(cardapio)
             else:
                 self.bot.send_message('Não foi encontrado cardápio para o dia pesquisado, desculpe.')
-            self.bot.set_flow(BotFlowEnum.NENHUM.value, self.STEP_ZERO)
-        self._show_flow_options()
 
     def _print_cardapio(self, cardapio):
         cardapio_str = ''
@@ -259,11 +289,11 @@ class EduBot(object):
         self.bot.send_message(cardapio_str)
         self.bot.send_message('Obrigado por consultar!')
 
-    def _show_flow_options(self):
-        self.bot.send_message('Escolha uma das opções',
+    def _main_menu(self):
+        self.bot.send_message('Bem vindo ao EduBot! Por favor, escolha uma das opções',
                               [BotFlowEnum.QUAL_CARDAPIO.value,
                                BotFlowEnum.AVALIAR_REFEICAO.value,
-                               BotFlowEnum.ASSINAR_NOTIFICACAO.value])
+                               BotFlowEnum.RECEBER_NOTIFICACAO.value])
 
     def _is_age_option(self, opt):
         if opt in self.ages_options:
