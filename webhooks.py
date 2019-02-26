@@ -3,14 +3,22 @@ import os
 from http import HTTPStatus
 
 from flask import Flask, request
+from pymongo import MongoClient
+from dotenv import load_dotenv
 
-from .chat_processor import process_message
+from chatbots import EduBot
 
 app = Flask(__name__)
 
+load_dotenv('.env')
+
+client = MongoClient(host=os.environ.get('MONGO_HOST'))
+conn = client['MarceloBotTest']
+
 
 def process_message_task(source, msg_request):
-    process_message.delay(source=source, data=json.loads(msg_request.data.decode()))
+    bt = EduBot(source, payload=json.loads(msg_request.data.decode()), conn=conn)
+    bt.process_flow()
 
 
 @app.route('/telegram', methods=['POST'])
@@ -31,4 +39,4 @@ def facebook():
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0', port=3000)

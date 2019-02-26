@@ -9,7 +9,7 @@ import requests
 
 from api_client import PratoAbertoApiClient
 
-log = logging.getLogger('chatbots')
+log = logging.getLogger(__name__)
 
 
 class BotFlowEnum(Enum):
@@ -28,10 +28,13 @@ class BaseBot(object):
     def send_message(self, text, keyboard_opts=None):
         raise NotImplementedError
 
-    def update_user_info(self):
+    def update_user_data(self, args):
         raise NotImplementedError
 
     def set_flow(self, flow_name, step):
+        raise NotImplementedError
+
+    def get_current_flow(self):
         raise NotImplementedError
 
 
@@ -48,8 +51,6 @@ class TelegramBot(BaseBot):
         'date': 1550693882, 'text': 'marcelus'}
         }
     """
-    # TODO so receber um payload de um wehhook e desenrolar daqui pra frente?
-    os.environ['TG_TOKEN'] = '780759709:AAGP1IigPhGtBqiIKK-dBaageSSOjq68mvM'  # @edu_marcelo_test_bot
     TG_URL = 'https://api.telegram.org/bot{}/'.format(os.environ.get('TG_TOKEN'))
     TG_BASE_MESSAGE_URL = TG_URL + 'sendMessage?chat_id={}&text={}&parse_mode=Markdown'
 
@@ -92,7 +93,7 @@ class TelegramBot(BaseBot):
         self.conn.users.update_one(query, {'$set': args}, upsert=True)
 
     def get_current_flow(self):
-        "Retorna um dict com os dados do usuário ou nada"
+        """Retorna um dict com os dados do usuário ou nada"""
         query = {'_id': self.chat_id}
         user = self.conn.users.find_one(query)
         return user
@@ -113,8 +114,10 @@ class TelegramBot(BaseBot):
     #
 
     def _check_flow(self):
-        """Caso o txt recebido seja um dos status iniciais, volta para o começo"""
-        if self.text in [BotFlowEnum.QUAL_CARDAPIO.value, BotFlowEnum.AVALIAR_REFEICAO.value,
+        """Caso o txt recebido seja um dos status iniciais, volta para o começo,
+        Serve também como uma inicialização para uma nova conversa."""
+        if self.text in [BotFlowEnum.QUAL_CARDAPIO.value,
+                         BotFlowEnum.AVALIAR_REFEICAO.value,
                          BotFlowEnum.ASSINAR_NOTIFICACAO.value]:
             self._reset_flow(self.text)
 
@@ -179,6 +182,7 @@ class EduBot(object):
                     '1 ano']
 
     def __init__(self, platform, payload, conn):
+        log.debug('{} -> payload: {}'.format(platform, payload))
         self.api_client = PratoAbertoApiClient()
         if platform == 'telegram':
             self.bot = TelegramBot(payload, conn)

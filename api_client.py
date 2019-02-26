@@ -1,6 +1,10 @@
+import logging
+import os
 from urllib.parse import urlencode, urljoin
 
 import requests
+
+log = logging.getLogger(__name__)
 
 
 def url_join_with_params(base, url, params):
@@ -18,18 +22,12 @@ def url_join_with_params(base, url, params):
 
 
 class PratoAbertoApiClient(object):
-    # TODO get os environ
-    API_URL = 'https://pratoaberto.sme.prefeitura.sp.gov.br/api/'
+    API_URL = os.environ.get('API_URL')
     headers = {
         'User-Agent':
             'Mozilla/5.0 (X11; Fedora; Linux x86_64) AppleWebKit/537.36 '
             '(KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36'
     }
-
-    def _base_request(self, url):
-        r = requests.get(url, headers=self.headers)
-        print(url)
-        return r.json()
 
     def get_escola_by_eol_code(self, cod_eol):
         url = urljoin(self.API_URL, 'escola/')
@@ -43,7 +41,6 @@ class PratoAbertoApiClient(object):
                                                 'idade': idade,
                                                 'data_inicial': '',
                                                 'data_final': ''}
-        :return:
         """
         query_args = {
             'tipo_unidade': school['tipo_unidade'],
@@ -78,3 +75,9 @@ class PratoAbertoApiClient(object):
         except IndexError as e:
             pass
         return idades
+
+    def _base_request(self, url):
+        r = requests.get(url, headers=self.headers)
+        print(url)
+        log.debug('url: {}'.format(url))
+        return r.json()
