@@ -56,6 +56,19 @@ class TelegramBot(BaseBot):
         self.chat_name = payload['message']['chat']['first_name']
         self._check_flow()
 
+    def clear_data(self):
+        query = {'_id': self.chat_id}
+        user = self.conn.users.find_one(query)
+        if user:
+            args = {'school': '',
+                    'age': '',
+                    'menu_date': '',
+                    'evaluation': '',
+                    'last_selected_meal': '',
+                    'satisfied': '',
+                    'opnion': ''}
+            self.conn.users.update_one(query, {'$set': args}, upsert=True)
+
     def send_message(self, text, keyboard_opts=None):
         """
         Creates a url with text and buttons
@@ -111,6 +124,19 @@ class TelegramBot(BaseBot):
             'step': step
         }
         self.conn.users.update_one(query, {'$set': flow_info}, upsert=True)
+
+    def concat_evaluation(self):
+        query = {'_id': self.chat_id}
+        user = self.get_user_data()
+        assert user['flow_name'] == BotFlowEnum.AVALIAR_REFEICAO.value
+        evaluation_data = {'school': user['school'],
+                           'meal': user['last_selected_meal'],
+                           'age': user['age'],
+                           'evaluation': user['evaluation'],
+                           'opnion': user['opnion'],
+                           'satisfied': user['satisfied'],
+                           'menu_date': user['menu_date']}
+        self.conn.users.update_one(query, {'$push': {'evaluations': evaluation_data}}, upsert=True)
 
     #
     # Private
@@ -175,35 +201,44 @@ class EduBot(object):
     (STEP_SEARCH_SCHOOL,
      STEP_SCHOOL_SELECTED,
      STEP_SEARCH_SCHOOL2,
-     STEP_MENU_SHOWN) = range(4)
+     STEP_MENU_SHOWN,
+     STEP_MENU_SHOWN2,
+     STEP_SATISFIED,
+     STEP_EVALUATION,
+     STEP_HAS_OPINION,
+     STEP_OPINION) = range(9)
 
     STEP_ZERO = 0
 
-    days_options = ['Hoje', 'Amanhã', 'Ontem']
+    days_opts = ['Hoje', 'Amanhã', 'Ontem']
 
-    ages_options = ['8 a 11 meses  - parcial',
-                    'EMEI da CEMEI',
-                    '6 a 7 meses - parcial',
-                    '7 meses',
-                    '0 a 5 meses',
-                    '6 meses',
-                    '4 a 6 anos - parcial',
-                    '2 a 3 anos - parcial',
-                    'Professor ',
-                    'Pro Jovem (filhos)',
-                    'Professor (jantar)',
-                    '2 a 6 anos',
-                    'Toda Idade',
-                    '6 a 7 meses',
-                    '2 a 3 anos',
-                    '0 a 1 mês',
-                    '4 a 5 meses',
-                    '8 a 11 meses',
-                    '1 ano - parcial',
-                    '1 a 3 meses',
-                    '4 a 6 anos',
-                    'Todas as idades',
-                    '1 ano']
+    yesno_opts = ['Sim', 'Não']
+
+    evaluation_opts = 'Sem gosto', 'Normal', 'Gostoso', 'Delicioso'
+
+    ages_opts = ['8 a 11 meses  - parcial',
+                 'EMEI da CEMEI',
+                 '6 a 7 meses - parcial',
+                 '7 meses',
+                 '0 a 5 meses',
+                 '6 meses',
+                 '4 a 6 anos - parcial',
+                 '2 a 3 anos - parcial',
+                 'Professor ',
+                 'Pro Jovem (filhos)',
+                 'Professor (jantar)',
+                 '2 a 6 anos',
+                 'Toda Idade',
+                 '6 a 7 meses',
+                 '2 a 3 anos',
+                 '0 a 1 mês',
+                 '4 a 5 meses',
+                 '8 a 11 meses',
+                 '1 ano - parcial',
+                 '1 a 3 meses',
+                 '4 a 6 anos',
+                 'Todas as idades',
+                 '1 ano']
 
     def __init__(self, platform, payload, conn):
         log.debug('{} -> payload: {}'.format(platform, payload))
@@ -241,6 +276,7 @@ class EduBot(object):
         self._base_menu_flow(current_flow, step)
 
     def _base_menu_flow(self, current_flow, step):
+        """Search for school and returns menu"""
         if step == self.STEP_SEARCH_SCHOOL:
             self.bot.send_message('Digite o nome da escola')
             self.bot.set_flow(current_flow, self.STEP_SEARCH_SCHOOL2)
@@ -250,6 +286,7 @@ class EduBot(object):
             if self._is_age_option(self.bot.text):
                 self._school_selected_parse_age()
             elif self._is_day_option(self.bot.text):
+                # last step
                 self._school_selected_parse_day(current_flow)
             else:
                 self._school_selected_get_ages()
@@ -258,6 +295,34 @@ class EduBot(object):
         current_flow = BotFlowEnum.AVALIAR_REFEICAO.value
         if step == self.STEP_MENU_SHOWN:
             self._show_menu(has_buttons=True)
+            self.bot.set_flow(current_flow, self.STEP_MENU_SHOWN2)
+        elif step == self.STEP_MENU_SHOWN2:
+            self.bot.update_user_data({'last_selected_meal': self.bot.text})
+            self.bot.send_message('Satisfeito com as refeições?', keyboard_opts=self.yesno_opts)
+            self.bot.set_flow(current_flow, self.STEP_SATISFIED)
+        elif step == self.STEP_SATISFIED:
+            # TODO: validator de input y/n
+            self.bot.update_user_data({'satisfied': self.bot.text})
+            self.bot.send_message('O que achou da refeição?', keyboard_opts=self.evaluation_opts)
+            self.bot.set_flow(current_flow, self.STEP_EVALUATION)
+        elif step == self.STEP_EVALUATION:
+            # TODO: validador de opções
+            self.bot.update_user_data({'evaluation': self.bot.text})
+            self.bot.send_message('Gostaria de deixar alguma opnião?', keyboard_opts=self.yesno_opts)
+            self.bot.set_flow(current_flow, self.STEP_HAS_OPINION)
+        elif step == self.STEP_HAS_OPINION:
+            # validador y/n
+            if self.bot.text == 'Não':
+                self.bot.send_message('Obrigado!')
+                self._main_menu()
+            else:
+                self.bot.send_message('Digite abaixo sua opinião...')
+                self.bot.set_flow(current_flow, self.STEP_OPINION)
+        elif step == self.STEP_OPINION:
+            self.bot.update_user_data({'opnion': self.bot.text})
+            self.bot.concat_evaluation()
+            self.bot.send_message('Obrigado!')
+            self._main_menu()
         self._base_menu_flow(current_flow, step)
 
     def _flow_meal_alert(self, step):
@@ -314,18 +379,19 @@ class EduBot(object):
             self.bot.send_message(menu_str)
 
     def _main_menu(self):
+        self.bot.clear_data()
         self.bot.send_message('Bem vindo ao EduBot! Por favor, escolha uma das opções',
                               [BotFlowEnum.QUAL_CARDAPIO.value,
                                BotFlowEnum.AVALIAR_REFEICAO.value,
                                BotFlowEnum.RECEBER_NOTIFICACAO.value])
 
     def _is_age_option(self, opt):
-        if opt in self.ages_options:
+        if opt in self.ages_opts:
             return True
         return False
 
     def _is_day_option(self, opt):
-        if opt in self.days_options:
+        if opt in self.days_opts:
             return True
         return False
 
@@ -352,7 +418,7 @@ class EduBot(object):
 
     def _school_selected_parse_age(self):
         self.bot.update_user_data(args={'age': self.bot.text})
-        self.bot.send_message('Escolha o dia', self.days_options)
+        self.bot.send_message('Escolha o dia', self.days_opts)
 
     def _school_selected_parse_day(self, current_flow):
         self.bot.update_user_data(args={'menu_date': self._parse_date(self.bot.text)})
