@@ -43,7 +43,7 @@ class BaseBot(object):
 
 class TelegramBot(BaseBot):
     """
-        Handles data related to telegram.
+        Handle data related to telegram.
         It doesnt handle states
     """
 
@@ -115,6 +115,14 @@ class TelegramBot(BaseBot):
     #
     # Private
     #
+    # TODO: separar as operações de banco da classe do telegram, não faz sentido ficar aqui.
+
+    def _concat_evaluation(self, user_data):
+        query = {'_id': self.chat_id}
+        age = user_data['age']
+        school = user_data['school']
+        # TODO: registrar a refeição escolhida...
+        meal = user_data['meal']
 
     def _create_notification(self, user_data):
         query = {'_id': self.chat_id}
@@ -157,12 +165,12 @@ class TelegramBot(BaseBot):
 
 
 class EduBot(object):
-    """Handles states
+    """Handle states
     Future plan: use a high level state machine
     https://github.com/pytransitions/transitions
 
     (1) Receives payloads and loads platform related class
-    (2) Handles states
+    (2) Handle states
     """
     (STEP_SEARCH_SCHOOL,
      STEP_SCHOOL_SELECTED,
@@ -249,9 +257,7 @@ class EduBot(object):
     def _flow_evaluate_meal(self, step):
         current_flow = BotFlowEnum.AVALIAR_REFEICAO.value
         if step == self.STEP_MENU_SHOWN:
-            self.bot.send_message('FALTA UM PEDAÇO PRA FRENTE, OBRIGADO PELA ATENÇÃO!')
-            self._main_menu()
-
+            self._show_menu(has_buttons=True)
         self._base_menu_flow(current_flow, step)
 
     def _flow_meal_alert(self, step):
@@ -272,29 +278,40 @@ class EduBot(object):
 
     # commons
 
-    def _show_menu(self, user_data):
+    def _show_menu(self, has_buttons=False):
+        user_data = self.bot.get_user_data()
         menu_date = user_data.get('menu_date').strftime('%Y%m%d')
         school_name = user_data.get('school')
         school = self.api_client.get_schools_by_name(school_name)[0]
         if school:
             school_detailed = self.api_client.get_school_by_eol_code(school['_id'])
-            menu = self.api_client.get_menu(age=user_data.get('age'),
-                                            menu_date=menu_date,
-                                            school=school_detailed)
-            if menu:
-                self._print_menu(menu)
+            menu_array = self.api_client.get_menu(age=user_data.get('age'),
+                                                  menu_date=menu_date,
+                                                  school=school_detailed)
+            if menu_array:
+                if has_buttons:
+                    self._print_menu(menu_array, has_buttons)
+                else:
+                    self._print_menu(menu_array)
             else:
                 self.bot.send_message('Não foi encontrado cardápio para o dia pesquisado, desculpe.')
 
-    def _print_menu(self, cardapio):
-        cardapio_str = ''
-        refeicoes = cardapio[0]['cardapio']
-        for refeicao in refeicoes:
-            cardapio_str += '{}:\n'.format(refeicao)
-            for comida in refeicoes[refeicao]:
-                cardapio_str += '- {}\n'.format(comida)
-
-        self.bot.send_message(cardapio_str)
+    def _print_menu(self, menu, has_buttons=False):
+        menu_str = ''
+        buttons = []
+        meals = menu[0]['cardapio']
+        for meal in meals:
+            menu_with_meal = ''
+            menu_str += '{}:\n'.format(meal)
+            menu_with_meal += '{}:\n'.format(meal)
+            for food in meals[meal]:
+                menu_str += '- {}\n'.format(food)
+                menu_with_meal += '- {}\n'.format(food)
+            buttons.append(menu_with_meal)
+        if has_buttons:
+            self.bot.send_message('Qual refeição?', buttons)
+        else:
+            self.bot.send_message(menu_str)
 
     def _main_menu(self):
         self.bot.send_message('Bem vindo ao EduBot! Por favor, escolha uma das opções',
@@ -339,8 +356,8 @@ class EduBot(object):
 
     def _school_selected_parse_day(self, current_flow):
         self.bot.update_user_data(args={'menu_date': self._parse_date(self.bot.text)})
-        self._show_menu(self.bot.get_user_data())
         if current_flow == BotFlowEnum.QUAL_CARDAPIO.value:
+            self._show_menu()
             self._main_menu()
         elif current_flow == BotFlowEnum.AVALIAR_REFEICAO.value:
             self.bot.set_flow(current_flow, self.STEP_MENU_SHOWN)
