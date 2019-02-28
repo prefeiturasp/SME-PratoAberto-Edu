@@ -54,8 +54,15 @@ class TelegramBot(BaseBot):
         self.chat_id = payload['message']['chat']['id']
         self.text = payload['message']['text'].strip()
         self.chat_name = payload['message']['chat']['first_name']
+        self.last_name = payload['message']['chat']['last_name']
+        self.username = payload['message']['chat']['username']
+        print(payload)
+        self.user_conn = BotDbConnection(self.chat_id, 'telegram',
+                                         name=self.chat_name,
+                                         last_name=self.last_name,
+                                         platform_alias=self.username
+                                         )
         self._check_flow()
-        self.user_conn = BotDbConnection(self.chat_id, 'telegram', name=self.chat_name)
 
     def clear_data(self):
         self.user_conn.clean_flow_control_data()
@@ -91,6 +98,7 @@ class TelegramBot(BaseBot):
         return self.user_conn.to_dict()
 
     def set_flow(self, flow_name, flow_step):
+        print(flow_name, flow_step)
         self.user_conn.update_flow_control(flow_name=flow_name, flow_step=flow_step)
 
     def concat_evaluation(self):
@@ -226,17 +234,17 @@ class EduBot(object):
             self._show_menu(has_buttons=True)
             self.bot.set_flow(current_flow, self.STEP_MENU_SHOWN2)
         elif step == self.STEP_MENU_SHOWN2:
-            self.bot.update_flow_data({'last_selected_meal': self.bot.text})
+            self.bot.update_flow_data(meal=self.bot.text)
             self.bot.send_message('Satisfeito com as refeições?', keyboard_opts=self.yesno_opts)
             self.bot.set_flow(current_flow, self.STEP_SATISFIED)
         elif step == self.STEP_SATISFIED:
             # TODO: validator de input y/n
-            self.bot.update_flow_data({'satisfied': self.bot.text})
+            self.bot.update_flow_data(satisfied=self.bot.text)
             self.bot.send_message('O que achou da refeição?', keyboard_opts=self.evaluation_opts)
             self.bot.set_flow(current_flow, self.STEP_EVALUATION)
         elif step == self.STEP_EVALUATION:
             # TODO: validador de opções
-            self.bot.update_flow_data({'evaluation': self.bot.text})
+            self.bot.update_flow_data(evaluation=self.bot.text)
             self.bot.send_message('Gostaria de deixar alguma opnião?', keyboard_opts=self.yesno_opts)
             self.bot.set_flow(current_flow, self.STEP_HAS_OPINION)
         elif step == self.STEP_HAS_OPINION:
@@ -248,7 +256,7 @@ class EduBot(object):
                 self.bot.send_message('Digite abaixo sua opinião...')
                 self.bot.set_flow(current_flow, self.STEP_OPINION)
         elif step == self.STEP_OPINION:
-            self.bot.update_flow_data({'opnion': self.bot.text})
+            self.bot.update_flow_data(comment=self.bot.text)
             self.bot.concat_evaluation()
             self.bot.send_message('Obrigado!')
             self._main_menu()
@@ -263,7 +271,7 @@ class EduBot(object):
             self._search_school(current_flow)
         elif step == self.STEP_SCHOOL_SELECTED:
             if self._is_age_option(self.bot.text):
-                self.bot.update_flow_data(args={'age': self.bot.text})
+                self.bot.update_flow_data(age=self.bot.text)
                 self.bot.save_notification()
                 self.bot.send_message('Sua notificação foi salva!')
                 self._main_menu()
@@ -324,7 +332,7 @@ class EduBot(object):
             return True
         return False
 
-    def _parse_date(self, date_opt):
+    def _to_datetime(self, date_opt):
         """
         parse specific str to datetime
         """
@@ -346,11 +354,11 @@ class EduBot(object):
         return retval
 
     def _school_selected_parse_age(self):
-        self.bot.update_flow_data(args={'age': self.bot.text})
+        self.bot.update_flow_data(age=self.bot.text)
         self.bot.send_message('Escolha o dia', self.days_opts)
 
     def _school_selected_parse_day(self, current_flow):
-        self.bot.update_flow_data(args={'menu_date': self._parse_date(self.bot.text)})
+        self.bot.update_flow_data(menu_date=self._to_datetime(self.bot.text))
         if current_flow == BotFlowEnum.QUAL_CARDAPIO.value:
             self._show_menu()
             self._main_menu()
@@ -359,7 +367,7 @@ class EduBot(object):
             self._flow_evaluate_meal(self.STEP_MENU_SHOWN)
 
     def _school_selected_get_ages(self):
-        self.bot.update_flow_data(args={'school': self.bot.text})
+        self.bot.update_flow_data(school=self.bot.text)
         ages = self.api_client.get_ages_by_school_nome(self.bot.text)
         if ages:
             self.bot.send_message('Escolha uma idade', ages)

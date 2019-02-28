@@ -20,7 +20,7 @@ class Evaluation(EmbeddedDocument):
 
 
 class FlowControl(EmbeddedDocument):
-    flow_name = StringField(required=False, max_length=15)
+    flow_name = StringField(required=False, max_length=30)
     flow_step = IntField(required=False)
     school = StringField(required=False, max_length=100)
     age = StringField(required=False, max_length=25)
@@ -59,7 +59,7 @@ class BotDbConnection(object):
         user = self._get_user()
         if user:
             flow_control = FlowControl(flow_name=kwargs.get('flow_name', None),
-                                       flow_step=kwargs.get('flow_name', None),
+                                       flow_step=kwargs.get('flow_step', None),
                                        school=kwargs.get('school', None),
                                        age=kwargs.get('age', None),
                                        menu_date=kwargs.get('menu_date', None),

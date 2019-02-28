@@ -3,21 +3,14 @@ import os
 from http import HTTPStatus
 
 from flask import Flask, request
-from pymongo import MongoClient
-from dotenv import load_dotenv
 
 from chatbots import EduBot
 
 app = Flask(__name__)
 
-load_dotenv('.env')
-
-client = MongoClient(host=os.environ.get('MONGO_HOST'))
-conn = client['MarceloBotTest']
-
 
 def process_message_task(source, msg_request):
-    bt = EduBot(source, payload=json.loads(msg_request.data.decode()), conn=conn)
+    bt = EduBot(source, payload=json.loads(msg_request.data.decode()))
     bt.process_flow()
 
 
