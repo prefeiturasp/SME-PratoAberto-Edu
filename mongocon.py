@@ -1,4 +1,3 @@
-import datetime
 import json
 import os
 
@@ -16,7 +15,7 @@ class Evaluation(EmbeddedDocument):
     age = StringField(required=True, max_length=25)
     comment = StringField(required=False, max_length=300)
     satisfied = BooleanField(required=True)
-    menu_date = DateTimeField(default=datetime.datetime.utcnow)
+    menu_date = DateTimeField(required=False)
 
 
 class FlowControl(EmbeddedDocument):
@@ -24,7 +23,7 @@ class FlowControl(EmbeddedDocument):
     flow_step = IntField(required=False)
     school = StringField(required=False, max_length=100)
     age = StringField(required=False, max_length=25)
-    menu_date = DateTimeField(default=datetime.datetime.utcnow)
+    menu_date = DateTimeField(required=False)
     satisfied = BooleanField(required=False)
     evaluation = StringField(required=False, max_length=15)  # Bom, normal, muito bom, ruim...
     comment = StringField(required=False, max_length=300)
@@ -56,18 +55,25 @@ class BotDbConnection(object):
         self.user_data = self._get_of_create_user(**kwargs)
 
     def update_flow_control(self, **kwargs):
+        fields = ['flow_name', 'flow_step', 'school', 'age', 'comment',
+                  'menu_date', 'satisfied', 'evaluation', 'meal']
         user = self._get_user()
+        # TODO refatorar isso.
         if user:
-            flow_control = FlowControl(flow_name=kwargs.get('flow_name', None),
-                                       flow_step=kwargs.get('flow_step', None),
-                                       school=kwargs.get('school', None),
-                                       age=kwargs.get('age', None),
-                                       menu_date=kwargs.get('menu_date', None),
-                                       satisfied=kwargs.get('satisfied', None),
-                                       evaluation=kwargs.get('evaluation', None),
-                                       comment=kwargs.get('comment', None),
-                                       meal=kwargs.get('meal', None))
-            user.flow_control = flow_control
+            if not user.flow_control:
+                # não tem um flow control, só cria
+                flow_control = FlowControl()
+                for field in fields:
+                    content = kwargs.get(field, None)
+                    if content:
+                        flow_control.__setattr__(field, content)
+                user.flow_control = flow_control
+            else:
+                # ja tem um flow control, tem que atualizar os fields
+                for field in fields:
+                    content = kwargs.get(field, None)
+                    if content:
+                        user.flow_control.__setattr__(field, content)
             user.save()
         return user
 
@@ -137,6 +143,8 @@ class BotDbConnection(object):
 
 if __name__ == '__main__':
     g = BotDbConnection(564654, 'facebook', name='asdasd', fulano='asdasda')
-    g.update_flow_control(age='55555555555555')
-    g.save_evaluation()
+    g.update_flow_control(age='345435')
+    g.update_flow_control(school='234324')
+    g.update_flow_control(meal='3123')
+    # g.save_evaluation()
     print(g)

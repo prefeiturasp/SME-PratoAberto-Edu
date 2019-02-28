@@ -98,7 +98,6 @@ class TelegramBot(BaseBot):
         return self.user_conn.to_dict()
 
     def set_flow(self, flow_name, flow_step):
-        print(flow_name, flow_step)
         self.user_conn.update_flow_control(flow_name=flow_name, flow_step=flow_step)
 
     def concat_evaluation(self):
@@ -185,13 +184,16 @@ class EduBot(object):
 
     def process_flow(self):
         user_data = self.bot.get_user_data()
+        print('user data', user_data)
         if not user_data:
             return self._main_menu()
-        if not user_data.get('step', None) and not user_data.get('flow_name', None):
+        if not user_data['flow_control']['flow_step'] and not user_data['flow_control']['flow_name']:
             return self._main_menu()
 
-        step = user_data['step']
-        flow_name = user_data['flow_name']
+        step = user_data['flow_control']['flow_step']
+        flow_name = user_data['flow_control']['flow_name']
+
+        print('step, flow', step, flow_name)
 
         if flow_name == BotFlowEnum.NENHUM.value:
             return self._main_menu()
@@ -209,6 +211,7 @@ class EduBot(object):
     # flows
 
     def _flow_search_menu(self, step):
+        print('entrou ohghoohohoh')
         current_flow = BotFlowEnum.QUAL_CARDAPIO.value
         self._base_menu_flow(current_flow, step)
 
@@ -316,7 +319,7 @@ class EduBot(object):
             self.bot.send_message(menu_str)
 
     def _main_menu(self):
-        self.bot.clear_data()
+        # self.bot.clear_data()
         self.bot.send_message('Bem vindo ao EduBot! Por favor, escolha uma das opções',
                               [BotFlowEnum.QUAL_CARDAPIO.value,
                                BotFlowEnum.AVALIAR_REFEICAO.value,
