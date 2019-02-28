@@ -10,7 +10,7 @@ from mongoengine import (connect, EmbeddedDocument, DateTimeField,
 load_dotenv('.env')
 
 
-class Evaluations(EmbeddedDocument):
+class Evaluation(EmbeddedDocument):
     school = StringField(required=True, max_length=100)
     meal = StringField(required=True, max_length=300)
     age = StringField(required=True, max_length=25)
@@ -44,7 +44,7 @@ class UserData(Document):
     last_name = StringField(required=False, max_length=20)
     flow_control = EmbeddedDocumentField(FlowControl)
     notification = EmbeddedDocumentField(Notification, required=False)
-    evaluations = ListField(EmbeddedDocumentField(Evaluations))
+    evaluations = ListField(EmbeddedDocumentField(Evaluation))
 
 
 class BotDbConnection(object):
@@ -69,12 +69,14 @@ class BotDbConnection(object):
                                        meal=kwargs.get('meal', None))
             user.flow_control = flow_control
             user.save()
+        return user
 
     def clean_flow_control_data(self):
         user = self._get_user()
         if user:
             user.flow_control = None
             user.save()
+        return user
 
     def save_notification(self):
         user = self._get_user()
@@ -82,6 +84,20 @@ class BotDbConnection(object):
             user.notification = Notification(school=user.flow_control.school,
                                              age=user.flow_control.age)
             user.save()
+        return user
+
+    def save_evaluation(self):
+        user = self._get_user()
+        if user:
+            evaluation = Evaluation(school=user.flow_control.school,
+                                    meal=user.flow_control.school,
+                                    age=user.flow_control.age,
+                                    comment=user.flow_control.comment,
+                                    satisfied=user.flow_control.satisfied,
+                                    menu_date=user.flow_control.menu_date)
+            user.evaluations.append(evaluation)
+            user.save()
+        return user
 
     def to_dict(self):
         return json.loads(self.user_data.to_json())
@@ -89,10 +105,6 @@ class BotDbConnection(object):
     #
     # Private
     #
-
-    def _to_dict(self, obj):
-        """Parse MongoEngine object to dict"""
-        return json.loads(obj.to_json())
 
     def _get_of_create_user(self, **kwargs):
         user = self._get_user()
@@ -123,8 +135,8 @@ class BotDbConnection(object):
         return self.user_data.to_json()
 
 
-b = BotDbConnection(14145, 'facebook')
-b.update_flow_control(school='deboche deboche deboche debochedeboche', meal='arroz com figado de coelho',
-                      satisfied=False, age='saidera')
-b.save_notification()
-print(b.to_dict())
+if __name__ == '__main__':
+    g = BotDbConnection(564654, 'facebook', name='asdasd', fulano='asdasda')
+    g.update_flow_control(age='55555555555555')
+    g.save_evaluation()
+    print(g)
