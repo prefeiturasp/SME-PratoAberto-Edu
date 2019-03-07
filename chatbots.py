@@ -93,7 +93,9 @@ class TelegramBot(BaseBot):
         self.user_conn.update_flow_control(**kwargs)
 
     def get_user_data(self):
-        return self.user_conn.to_dict()
+        # para buscar os dados mais atualizados
+        user_conn = BotDbConnection(self.chat_id, 'telegram')
+        return user_conn.to_dict()
 
     def set_flow(self, flow_name, flow_step):
         self.user_conn.update_flow_control(flow_name=flow_name, flow_step=flow_step)
@@ -175,6 +177,7 @@ class EduBot(object):
                  '1 ano']
 
     def __init__(self, platform, payload):
+        print('payload: ', payload)
         log.debug('{} -> payload: {}'.format(platform, payload))
         self.api_client = PratoAbertoApiClient()
         if platform == 'telegram':
