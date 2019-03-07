@@ -16,6 +16,7 @@ class Evaluation(EmbeddedDocument):
     comment = StringField(required=False, max_length=300)
     satisfied = BooleanField(required=True)
     menu_date = DateTimeField(required=False)
+    evaluation = StringField(required=False, max_length=15)  # Bom, normal, muito bom, ruim...
 
 
 class FlowControl(EmbeddedDocument):
@@ -98,6 +99,7 @@ class BotDbConnection(object):
             evaluation = Evaluation(school=user.flow_control.school,
                                     meal=user.flow_control.meal,
                                     age=user.flow_control.age,
+                                    evaluation=user.flow_control.evaluation,
                                     comment=user.flow_control.comment,
                                     satisfied=user.flow_control.satisfied,
                                     menu_date=user.flow_control.menu_date)
