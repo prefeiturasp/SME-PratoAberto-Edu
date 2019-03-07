@@ -209,7 +209,6 @@ class EduBot(object):
     # flows
 
     def _flow_search_menu(self, step):
-        print('entrou ohghoohohoh')
         current_flow = BotFlowEnum.QUAL_CARDAPIO.value
         self._base_menu_flow(current_flow, step)
 
@@ -240,7 +239,7 @@ class EduBot(object):
             self.bot.set_flow(current_flow, self.STEP_SATISFIED)
         elif step == self.STEP_SATISFIED:
             # TODO: validator de input y/n
-            self.bot.update_flow_data(satisfied=self.bot.text)
+            self.bot.update_flow_data(satisfied=self._from_string_to_boolean(self.bot.text))
             self.bot.send_message('O que achou da refeição?', keyboard_opts=self.evaluation_opts)
             self.bot.set_flow(current_flow, self.STEP_EVALUATION)
         elif step == self.STEP_EVALUATION:
@@ -319,7 +318,6 @@ class EduBot(object):
             self.bot.send_message(menu_str)
 
     def _main_menu(self):
-        # self.bot.clear_data()
         self.bot.send_message('Bem vindo ao EduBot! Por favor, escolha uma das opções',
                               [BotFlowEnum.QUAL_CARDAPIO.value,
                                BotFlowEnum.AVALIAR_REFEICAO.value,
@@ -344,6 +342,11 @@ class EduBot(object):
                       'Amanhã': today + datetime.timedelta(days=1),
                       'Ontem': today - datetime.timedelta(days=1)}
         return parse_dict.get(date_opt, today)
+
+    def _from_string_to_boolean(self, option):
+        retval = {self.yesno_opts[0]: True,
+                  self.yesno_opts[1]: False}
+        return retval.get(option)
 
     def _get_schools_by_name(self, name):
         """

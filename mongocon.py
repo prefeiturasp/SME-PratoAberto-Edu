@@ -96,7 +96,7 @@ class BotDbConnection(object):
         user = self._get_user()
         if user:
             evaluation = Evaluation(school=user.flow_control.school,
-                                    meal=user.flow_control.school,
+                                    meal=user.flow_control.meal,
                                     age=user.flow_control.age,
                                     comment=user.flow_control.comment,
                                     satisfied=user.flow_control.satisfied,
