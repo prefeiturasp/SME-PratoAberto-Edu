@@ -56,12 +56,10 @@ class TelegramBot(BaseBot):
         self.chat_name = payload['message']['chat']['first_name']
         self.last_name = payload['message']['chat']['last_name']
         self.username = payload['message']['chat']['username']
-        print(payload)
         self.user_conn = BotDbConnection(self.chat_id, 'telegram',
                                          name=self.chat_name,
                                          last_name=self.last_name,
-                                         platform_alias=self.username
-                                         )
+                                         platform_alias=self.username)
         self._check_flow()
 
     def clear_data(self):
@@ -115,7 +113,7 @@ class TelegramBot(BaseBot):
             self._reset_flow(self.text)
 
     def _reset_flow(self, text):
-        self.set_flow(flow_name=text, flow_step=0)
+        self.set_flow(flow_name=text, flow_step=EduBot.STEP_INITIAL)
 
     def _concat_buttons(self, keyboard_opts, url, show_once=True):
         # https://core.telegram.org/bots/api/#keyboardbutton
@@ -142,9 +140,9 @@ class EduBot(object):
      STEP_SATISFIED,
      STEP_EVALUATION,
      STEP_HAS_OPINION,
-     STEP_OPINION) = range(9)
+     STEP_OPINION) = range(1, 10)
 
-    STEP_ZERO = 0
+    STEP_INITIAL = 1
 
     days_opts = ['Hoje', 'Amanhã', 'Ontem']
 
@@ -185,7 +183,7 @@ class EduBot(object):
     def process_flow(self):
         user_data = self.bot.get_user_data()
         print('user data', user_data)
-        if not user_data:
+        if not user_data or not user_data.get('flow_control'):
             return self._main_menu()
         if not user_data['flow_control']['flow_step'] and not user_data['flow_control']['flow_name']:
             return self._main_menu()
@@ -285,12 +283,14 @@ class EduBot(object):
 
     def _show_menu(self, has_buttons=False):
         user_data = self.bot.get_user_data()
-        menu_date = user_data.get('menu_date').strftime('%Y%m%d')
-        school_name = user_data.get('school')
+        flow_control = user_data['flow_control']
+        timestamp = str(flow_control['menu_date']['$date'])[:10]
+        menu_date = datetime.datetime.utcfromtimestamp(int(timestamp)).strftime('%Y%m%d')
+        school_name = flow_control['school']
         school = self.api_client.get_schools_by_name(school_name)[0]
         if school:
             school_detailed = self.api_client.get_school_by_eol_code(school['_id'])
-            menu_array = self.api_client.get_menu(age=user_data.get('age'),
+            menu_array = self.api_client.get_menu(age=flow_control['age'],
                                                   menu_date=menu_date,
                                                   school=school_detailed)
             if menu_array:
