@@ -4,7 +4,8 @@ from http import HTTPStatus
 
 from flask import Flask, request
 
-from chatbots import EduBot
+from chatbots.edubot import EduBot
+
 
 app = Flask(__name__)
 
