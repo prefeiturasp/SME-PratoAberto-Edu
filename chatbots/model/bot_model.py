@@ -108,7 +108,8 @@ class BotDbConnection(object):
         return user
 
     def to_dict(self):
-        return json.loads(self.user_data.to_json())
+        user = self._get_user()
+        return json.loads(user.to_json())
 
     #
     # Private
