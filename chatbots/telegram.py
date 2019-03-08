@@ -7,7 +7,7 @@ import requests
 
 from chatbots.base import BaseBot
 from chatbots.botenum import BotFlowEnum
-from mongocon import BotDbConnection
+from chatbots.model.bot_model import BotDbConnection
 
 log = logging.getLogger(__name__)
 

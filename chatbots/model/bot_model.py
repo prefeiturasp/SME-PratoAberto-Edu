@@ -135,18 +135,10 @@ class BotDbConnection(object):
                             platform=platform,
                             name=kwargs.get('name', None),
                             platform_alias=kwargs.get('platform_alias', None),
-                            last_name=kwargs.get('name', None))
+                            last_name=kwargs.get('last_name', None))
             user.save()
         return user
 
     def __repr__(self):
-        return self.user_data.to_json()
-
-
-if __name__ == '__main__':
-    g = BotDbConnection(564654, 'facebook', name='asdasd', fulano='asdasda')
-    g.update_flow_control(age='345435')
-    g.update_flow_control(school='234324')
-    g.update_flow_control(meal='3123')
-    # g.save_evaluation()
-    print(g)
+        user = self._get_user()
+        return user.to_json()
