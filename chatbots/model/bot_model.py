@@ -40,7 +40,7 @@ class UserData(Document):
     platform = StringField(required=True, max_length=20)  # telegram | facebook
     platform_id = IntField(required=True)
     platform_alias = StringField(required=False, max_length=20)  # ex @fulano no telegram
-    name = StringField(required=True, max_length=20)
+    name = StringField(required=False, max_length=20)
     last_name = StringField(required=False, max_length=20)
     flow_control = EmbeddedDocumentField(FlowControl)
     notification = EmbeddedDocumentField(Notification, required=False)

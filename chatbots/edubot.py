@@ -3,6 +3,7 @@ import logging
 
 from api_client import PratoAbertoApiClient
 from chatbots.botenum import BotFlowEnum
+from chatbots.facebook import FacebookBot
 from chatbots.telegram import TelegramBot
 
 log = logging.getLogger(__name__)
@@ -64,6 +65,8 @@ class EduBot(object):
         self.api_client = PratoAbertoApiClient()
         if platform == 'telegram':
             self.bot = TelegramBot(payload)
+        elif platform == 'facebook':
+            self.bot = FacebookBot(payload)
 
     def process_flow(self):
         user_data = self.bot.get_user_data()

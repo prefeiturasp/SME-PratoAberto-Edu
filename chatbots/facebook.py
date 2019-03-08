@@ -12,6 +12,18 @@ from chatbots.model.bot_model import BotDbConnection
 log = logging.getLogger(__name__)
 
 
+# FB_TOKEN="EAALCbonpKegBAEa9ZA1bnodDqJ1O2rfgM1Qhs9Q5rdr8ZBf1hh4jxDNqVnZArzsYMZBPHZAonGIyBg1fOcGTJXmnfCtZAo48VRGxzgrQVsNpqyHnGZA0F6baV8ahd9fEYfV68To3Rilzk9la6Qth65p08TEFsGgupBXqMYWxBMj1AZDZD"
+# FB_URL = 'https://graph.facebook.com/v2.6/me/messages/?access_token={}'.format(FB_TOKEN)
+#
+# FB_PROFILE_URL = 'https://graph.facebook.com/v2.6/%s?fields=first_name&access_token={}'.format(FB_TOKEN)
+#
+#
+
+#
+# r = requests.get(FB_PROFILE_URL % (chat_id))
+# r = requests.post(FB_URL, json=payload)
+
+
 class FacebookBot(BaseBot):
     """
         Handle data related to facebook.
@@ -21,19 +33,12 @@ class FacebookBot(BaseBot):
     def __init__(self, payload):
         super().__init__(payload)
         # payload:  {'object': 'page', 'entry': [{'id': '367746870624834', 'time': 1552072157835, 'messaging': [{'sender': {'id': '2477887728891261'}, 'recipient': {'id': '367746870624834'}, 'timestamp': 1552071970099, 'message': {'mid': 'V2AlrcRRfw_wX0zmQeWhn3z04TVqc8CauNLcSQOKGC7pBwKd6EcYQ8pG0yXV6QGEQDo-F8liNH4E4Yo-pefncw', 'seq': 98074, 'text': 'asdsadsad'}}]}]}
-        TG_URL = 'https://api.telegram.org/bot{}/'.format(os.environ.get('TG_TOKEN'))
-        self.TG_BASE_MESSAGE_URL = TG_URL + 'sendMessage?chat_id={}&text={}&parse_mode=Markdown'
+        self.FB_URL = 'https://graph.facebook.com/v2.6/me/messages/?access_token={}'.format(os.environ.get('FB_TOKEN'))
+        messaging = payload['entry'][0]['messaging'][0]
+        self.chat_id = messaging['sender']['id']
+        self.text = messaging['message']['text']
 
-        self.chat_id = payload['entry'][0]['messaging'][0]['sender']['id']
-        self.text = payload['entry'][0]['messaging'][0]['message']['text']
-        self.chat_name = 'fulanomen'
-        self.last_name = 'ciclano'
-        self.username = 'fulano user'
-
-        self.user_conn = BotDbConnection(self.chat_id, 'telegram',
-                                         name=self.chat_name,
-                                         last_name=self.last_name,
-                                         platform_alias=self.username)
+        self.user_conn = BotDbConnection(self.chat_id, 'telegram')
         self._check_flow()
 
     def clear_data(self):
@@ -47,15 +52,12 @@ class FacebookBot(BaseBot):
         :param keyboard_opts: array of string
         :return:
         """
-        text = urllib.parse.quote_plus(text)
-
-        url = self.TG_BASE_MESSAGE_URL.format(self.chat_id, text)
-        url = self._concat_buttons(keyboard_opts, url)
-
-        r = requests.get(url)
-
-        log.debug('telegram dispatch:')
-        log.debug(url)
+        payload = {
+                'recipient': {'id': self.chat_id},
+                'message': {
+                    'text': text}
+        }
+        r = requests.post(self.FB_URL, json=payload)
         log.debug('return: {}-{}'.format(r.status_code, r.text))
 
         return r.json()
@@ -68,7 +70,7 @@ class FacebookBot(BaseBot):
 
     def get_user_data(self):
         # para buscar os dados mais atualizados
-        user_conn = BotDbConnection(self.chat_id, 'telegram')
+        user_conn = BotDbConnection(self.chat_id, 'facebook')
         return user_conn.to_dict()
 
     def set_flow(self, flow_name, flow_step):
@@ -98,3 +100,10 @@ class FacebookBot(BaseBot):
             reply_markup = {'keyboard': keyboard_opts, 'one_time_keyboard': show_once}
             url += '&reply_markup={}'.format(json.dumps(reply_markup))
         return url
+
+    def _facebook_get_name(self):
+        fb_profile_url = 'https://graph.facebook.com/v2.6/{chat_id}?fields=first_name&access_token={token}'.format(
+            chat_id=self.chat_id, token=os.environ.get('FB_TOKEN'))
+        r = requests.get(fb_profile_url)
+        nome = r.json()['first_name']
+        return nome
