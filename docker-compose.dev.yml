@@ -1,0 +1,43 @@
+version: '3'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.7.8-alpine
+    container_name: rabbitmq_prato
+    hostname: rabbitmq_prato
+    volumes:
+      - ./rabbitmq:/var/lib/rabbitmq
+    ports:
+      - 15672:15672
+      - 15671:15671
+      - 4369:4369
+      - 5671:5671
+      - 5672:5672
+      - 25672:25672
+
+  bot_webhook:
+    build: .
+    command: gunicorn webhooks:app --timeout 120 --log-level DEBUG -w 1 -b 0.0.0.0:8002
+    volumes:
+      - .:/code
+    env_file:
+      - .env
+    ports:
+      - 8002:8002  # acessar localhost:8002/[facebook|telegram] para ativar o webhook
+
+  worker:
+    build: .
+    command: celery -A chat_processor  worker --loglevel=info
+    volumes:
+      - .:/code
+    links:
+      - rabbitmq
+    depends_on:
+      - rabbitmq
+    env_file:
+      - .env
+
+networks:
+  default:
+    external:
+      name: pratoaberto

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" id="Definitions_0l6rlwn" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="2.2.4">
+  <bpmn:collaboration id="Collaboration_0maqpw3">
+    <bpmn:participant id="Participant_11jkrty" processRef="Process_1" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_1" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_0fm1hss">
+      <bpmn:lane id="Lane_09ptdkf" name="Pessoa">
+        <bpmn:flowNodeRef>StartEvent_1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_08p81f0</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_0jnvfhp" name="Bot">
+        <bpmn:flowNodeRef>Task_0eocm71</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_1quk550</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>SequenceFlow_1q4wkbn</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="Task_08p81f0" name="Clica em cancelar notificações">
+      <bpmn:incoming>SequenceFlow_1q4wkbn</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0kskfhz</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="SequenceFlow_1q4wkbn" sourceRef="StartEvent_1" targetRef="Task_08p81f0" />
+    <bpmn:sequenceFlow id="SequenceFlow_0kskfhz" sourceRef="Task_08p81f0" targetRef="Task_0eocm71" />
+    <bpmn:task id="Task_0eocm71" name="Cancela e agradece :D">
+      <bpmn:incoming>SequenceFlow_0kskfhz</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1w666bt</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="EndEvent_1quk550">
+      <bpmn:incoming>SequenceFlow_1w666bt</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_1w666bt" sourceRef="Task_0eocm71" targetRef="EndEvent_1quk550" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_0maqpw3">
+      <bpmndi:BPMNShape id="Participant_11jkrty_di" bpmnElement="Participant_11jkrty">
+        <dc:Bounds x="96" y="20" width="369" height="323" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="173" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_09ptdkf_di" bpmnElement="Lane_09ptdkf">
+        <dc:Bounds x="126" y="20" width="339" height="187" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_0jnvfhp_di" bpmnElement="Lane_0jnvfhp">
+        <dc:Bounds x="126" y="207" width="339" height="136" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_08p81f0_di" bpmnElement="Task_08p81f0">
+        <dc:Bounds x="259" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1q4wkbn_di" bpmnElement="SequenceFlow_1q4wkbn">
+        <di:waypoint x="209" y="120" />
+        <di:waypoint x="259" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Task_0eocm71_di" bpmnElement="Task_0eocm71">
+        <dc:Bounds x="259" y="243" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0kskfhz_di" bpmnElement="SequenceFlow_0kskfhz">
+        <di:waypoint x="309" y="160" />
+        <di:waypoint x="309" y="243" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="EndEvent_1quk550_di" bpmnElement="EndEvent_1quk550">
+        <dc:Bounds x="409" y="265" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1w666bt_di" bpmnElement="SequenceFlow_1w666bt">
+        <di:waypoint x="359" y="283" />
+        <di:waypoint x="409" y="283" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
