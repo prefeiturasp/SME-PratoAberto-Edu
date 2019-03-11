@@ -5,14 +5,19 @@ from http import HTTPStatus
 from flask import Flask, request
 
 from chatbots.edubot import EduBot
-
+from chatbots.utils import validate_payload
 
 app = Flask(__name__)
 
 
-def process_message_task(source, msg_request):
-    bt = EduBot(source, payload=json.loads(msg_request.data.decode()))
-    bt.process_flow()
+def process_message_task(platform, msg_request):
+    payload = json.loads(msg_request.data.decode())
+    if validate_payload(payload, platform):
+        print('valido', platform, payload)
+        bt = EduBot(payload=payload, platform=platform)
+        bt.process_flow()
+    else:
+        print('invalido', platform, payload)
 
 
 @app.route('/telegram', methods=['POST'])

@@ -21,9 +21,12 @@ class FacebookBot(BaseBot):
         self.FB_URL = 'https://graph.facebook.com/v2.6/me/messages/?access_token={}'.format(os.environ.get('FB_TOKEN'))
         messaging = payload['entry'][0]['messaging'][0]
         self.chat_id = messaging['sender']['id']
-        self.text = messaging['message']['text']
+        try:
+            self.text = messaging['message']['text']
+        except KeyError as e:
+            self.text = messaging['postback']['payload']
 
-        self.user_conn = BotDbConnection(self.chat_id, 'telegram')
+        self.user_conn = BotDbConnection(self.chat_id, 'facebook')
         self._check_flow()
 
     def send_message(self, text, keyboard_opts=None):
@@ -69,7 +72,7 @@ class FacebookBot(BaseBot):
             buttons.append({
                 "type": "postback",
                 "title": text_option,
-                "payload": "DEVELOPER_DEFINED_PAYLOAD"
+                "payload": text_option
             })
         message = {
             "attachment": {
