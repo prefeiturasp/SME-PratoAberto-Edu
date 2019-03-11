@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import urllib
 
 import requests
 
@@ -41,43 +40,23 @@ class FacebookBot(BaseBot):
         self.user_conn = BotDbConnection(self.chat_id, 'telegram')
         self._check_flow()
 
-    def clear_data(self):
-        self.user_conn.clean_flow_control_data()
-
     def send_message(self, text, keyboard_opts=None):
         """
         Creates a url with text and buttons
 
         :param text: text
-        :param keyboard_opts: array of string
+        :param keyboard_opts: [text, text ...]
         :return:
         """
         payload = {
-                'recipient': {'id': self.chat_id},
-                'message': {
-                    'text': text}
+            'recipient': {'id': self.chat_id},
+            'message': {
+                'text': text}
         }
         r = requests.post(self.FB_URL, json=payload)
         log.debug('return: {}-{}'.format(r.status_code, r.text))
 
         return r.json()
-
-    def save_notification(self):
-        self.user_conn.save_notification()
-
-    def update_flow_data(self, **kwargs):
-        self.user_conn.update_flow_control(**kwargs)
-
-    def get_user_data(self):
-        # para buscar os dados mais atualizados
-        user_conn = BotDbConnection(self.chat_id, 'facebook')
-        return user_conn.to_dict()
-
-    def set_flow(self, flow_name, flow_step):
-        self.user_conn.update_flow_control(flow_name=flow_name, flow_step=flow_step)
-
-    def concat_evaluation(self):
-        self.user_conn.save_evaluation()
 
     #
     # Private
@@ -94,7 +73,6 @@ class FacebookBot(BaseBot):
         self.set_flow(flow_name=text, flow_step=BotFlowEnum.STEP_INITIAL.value)
 
     def _concat_buttons(self, keyboard_opts, url, show_once=True):
-        # https://core.telegram.org/bots/api/#keyboardbutton
         if keyboard_opts:
             keyboard_opts = [[text] for text in keyboard_opts]
             reply_markup = {'keyboard': keyboard_opts, 'one_time_keyboard': show_once}
