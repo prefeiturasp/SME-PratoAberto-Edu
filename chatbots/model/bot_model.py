@@ -1,12 +1,9 @@
 import json
 import os
 
-from dotenv import load_dotenv
 from mongoengine import (connect, EmbeddedDocument, DateTimeField,
                          StringField, BooleanField, IntField, Document,
                          EmbeddedDocumentField, ListField)
-
-load_dotenv('.env')
 
 
 class Evaluation(EmbeddedDocument):
