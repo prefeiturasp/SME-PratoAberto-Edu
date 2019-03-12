@@ -68,24 +68,19 @@ class EduBot(object):
     def process_flow(self):
         user_data = self.bot.get_user_data()
         edu_logger.debug('user data: {}'.format(user_data))
-        if not user_data or not user_data.get('flow_control'):
-            return self._main_menu()
-        if not user_data['flow_control']['flow_step'] and not user_data['flow_control']['flow_name']:
-            return self._main_menu()
+        if not self._is_valid_flow(user_data):
+            return
 
         step = user_data['flow_control']['flow_step']
         flow_name = user_data['flow_control']['flow_name']
-
         edu_logger.debug('flow: {} ; step {}'.format(flow_name, step))
 
-        if flow_name == BotFlowEnum.NENHUM.value:
-            return self._main_menu()
-        elif flow_name == BotFlowEnum.QUAL_CARDAPIO.value:
-            return self._flow_search_menu(step)
+        if flow_name == BotFlowEnum.QUAL_CARDAPIO.value:
+            self._flow_search_menu(step)
         elif flow_name == BotFlowEnum.AVALIAR_REFEICAO.value:
-            return self._flow_evaluate_meal(step)
+            self._flow_evaluate_meal(step)
         elif flow_name == BotFlowEnum.RECEBER_NOTIFICACAO.value:
-            return self._flow_meal_alert(step)
+            self._flow_meal_alert(step)
 
     #
     # Private
@@ -164,6 +159,16 @@ class EduBot(object):
                 self._school_selected_get_ages()
 
     # commons
+
+    def _is_valid_flow(self, user_data):
+        is_valid = True
+        if not user_data or not user_data.get('flow_control'):
+            is_valid = False
+            self._main_menu()
+        if not user_data['flow_control']['flow_step'] and not user_data['flow_control']['flow_name']:
+            is_valid = False
+            self._main_menu()
+        return is_valid
 
     def _show_menu(self, has_buttons=False):
         user_data = self.bot.get_user_data()

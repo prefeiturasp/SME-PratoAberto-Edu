@@ -3,7 +3,6 @@ import os
 import requests
 
 from chatbots.base import BaseBot
-from chatbots.botenum import BotFlowEnum
 from chatbots.model.bot_model import BotDbConnection
 from .utils import edu_logger
 
@@ -50,16 +49,6 @@ class FacebookBot(BaseBot):
     #
     # Private
     #
-
-    def _check_flow(self):
-        """if text is equal to initial statuses, them back to begin."""
-        if self.text in [BotFlowEnum.QUAL_CARDAPIO.value,
-                         BotFlowEnum.AVALIAR_REFEICAO.value,
-                         BotFlowEnum.RECEBER_NOTIFICACAO.value]:
-            self._reset_flow(self.text)
-
-    def _reset_flow(self, text):
-        self.set_flow(flow_name=text, flow_step=BotFlowEnum.STEP_INITIAL.value)
 
     def _concat_buttons(self, text, keyboard_opts):
         """
