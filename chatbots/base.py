@@ -1,3 +1,6 @@
+from chatbots.botenum import BotFlowEnum
+
+
 class BaseBot(object):
 
     def __init__(self, payload):
@@ -24,3 +27,13 @@ class BaseBot(object):
 
     def concat_evaluation(self):
         self.user_conn.save_evaluation()
+
+    def _check_flow(self):
+        """if text is equal to initial statuses, them back to begin."""
+        if self.text in [BotFlowEnum.QUAL_CARDAPIO.value,
+                         BotFlowEnum.AVALIAR_REFEICAO.value,
+                         BotFlowEnum.RECEBER_NOTIFICACAO.value]:
+            self._reset_flow(self.text)
+
+    def _reset_flow(self, text):
+        self.set_flow(flow_name=text, flow_step=BotFlowEnum.STEP_INITIAL.value)
