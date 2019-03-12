@@ -1,12 +1,10 @@
 import datetime
-import logging
 
 from api_client import PratoAbertoApiClient
 from chatbots.botenum import BotFlowEnum
 from chatbots.facebook import FacebookBot
 from chatbots.telegram import TelegramBot
-
-log = logging.getLogger(__name__)
+from chatbots.utils import edu_logger
 
 
 class EduBot(object):
@@ -60,8 +58,7 @@ class EduBot(object):
                  '1 ano']
 
     def __init__(self, platform, payload):
-        print('payload: ', payload)
-        log.debug('{} -> payload: {}'.format(platform, payload))
+        edu_logger.debug('{} -> payload: {}'.format(platform, payload))
         self.api_client = PratoAbertoApiClient()
         if platform == 'telegram':
             self.bot = TelegramBot(payload)
@@ -70,7 +67,7 @@ class EduBot(object):
 
     def process_flow(self):
         user_data = self.bot.get_user_data()
-        print('user data', user_data)
+        edu_logger.debug('user data: {}'.format(user_data))
         if not user_data or not user_data.get('flow_control'):
             return self._main_menu()
         if not user_data['flow_control']['flow_step'] and not user_data['flow_control']['flow_name']:
@@ -79,7 +76,7 @@ class EduBot(object):
         step = user_data['flow_control']['flow_step']
         flow_name = user_data['flow_control']['flow_name']
 
-        print('step, flow', step, flow_name)
+        edu_logger.debug('flow: {} ; step {}'.format(flow_name, step))
 
         if flow_name == BotFlowEnum.NENHUM.value:
             return self._main_menu()

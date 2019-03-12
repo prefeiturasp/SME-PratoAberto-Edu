@@ -1,4 +1,3 @@
-import logging
 import os
 
 import requests
@@ -6,8 +5,7 @@ import requests
 from chatbots.base import BaseBot
 from chatbots.botenum import BotFlowEnum
 from chatbots.model.bot_model import BotDbConnection
-
-log = logging.getLogger(__name__)
+from .utils import edu_logger
 
 
 class FacebookBot(BaseBot):
@@ -43,9 +41,10 @@ class FacebookBot(BaseBot):
                 'text': text}}
         if keyboard_opts:
             payload['message'] = self._concat_buttons(text, keyboard_opts)
-        r = requests.post(self.FB_URL, json=payload)
-        log.debug('return: {}-{}'.format(r.status_code, r.text))
 
+        r = requests.post(self.FB_URL, json=payload)
+        edu_logger.debug('facebook send message: {}'.format(payload))
+        edu_logger.debug('return: {}-{}'.format(r.status_code, r.text))
         return r.json()
 
     #
@@ -68,10 +67,10 @@ class FacebookBot(BaseBot):
         https://developers.facebook.com/docs/messenger-platform/reference/buttons/postback
         """
         buttons = []
-        for text_option in keyboard_opts:
+        for text_option in keyboard_opts[:3]:  # max of 3 buttons
             buttons.append({
                 "type": "postback",
-                "title": text_option,
+                "title": text_option[:80],
                 "payload": text_option
             })
         message = {

@@ -13,11 +13,11 @@ app = Flask(__name__)
 def process_message_task(platform, msg_request):
     payload = json.loads(msg_request.data.decode())
     if validate_payload(payload, platform):
-        print('valido', platform, payload)
         bt = EduBot(payload=payload, platform=platform)
         bt.process_flow()
     else:
-        print('invalido', platform, payload)
+        # app.logger.debug('Payload inválido para {}: {}'.format(platform, payload))
+        pass
 
 
 @app.route('/telegram', methods=['POST'])
@@ -38,4 +38,4 @@ def facebook():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=3000)
+    app.run()
