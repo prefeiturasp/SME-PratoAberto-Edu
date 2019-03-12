@@ -10,7 +10,7 @@ services:
     env_file:
       - .env
     ports:
-      - 8002:8002  # acessar localhost:8002/[facebook|telegram] para ativar o webhook
+      - 3000:8002  # acessar localhost:8002/[facebook|telegram] para ativar o webhook
 
 networks:
   default:

@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 import urllib
 
@@ -8,8 +7,7 @@ import requests
 from chatbots.base import BaseBot
 from chatbots.botenum import BotFlowEnum
 from chatbots.model.bot_model import BotDbConnection
-
-log = logging.getLogger(__name__)
+from .utils import edu_logger
 
 
 class TelegramBot(BaseBot):
@@ -48,9 +46,8 @@ class TelegramBot(BaseBot):
 
         r = requests.get(url)
 
-        log.debug('telegram dispatch:')
-        log.debug(url)
-        log.debug('return: {}-{}'.format(r.status_code, r.text))
+        edu_logger.debug('telegram send message: {}'.format(url))
+        edu_logger.debug('return: {}-{}'.format(r.status_code, r.text))
 
         return r.json()
 
