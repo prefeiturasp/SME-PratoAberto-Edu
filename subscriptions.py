@@ -1,29 +1,21 @@
 import datetime
 import os
 
-from celery import Celery
-from celery.signals import worker_process_init
-from celery.utils.log import get_task_logger
 from mongoengine import connect
 
-import celeryconfig
 from api_client import PratoAbertoApiClient
 from chatbots.facebook import FacebookNotification
 from chatbots.model.bot_model import UserData
 from chatbots.telegram import TelegramNotification
 
-app = Celery(celeryconfig.APP_NAME)
-app.config_from_object(celeryconfig)
-
-logger = get_task_logger(__name__)
-
-
-@worker_process_init.connect
-def init_worker(**kwargs):
-    connect(host=os.environ.get('MONGO_HOST'))
+connect(host=os.environ.get('MONGO_HOST'))
 
 
 class ProcessSubscriptions(object):
+    """
+    1 - Reads pratoaberto database for subscriptions.
+    2 - Sends to user the desired subscription.
+    """
 
     def __init__(self):
         self.users_with_notification = UserData.objects.filter(notification__exists=True)
@@ -35,7 +27,6 @@ class ProcessSubscriptions(object):
                 notification = user_data.notification
                 today_api_format = datetime.datetime.today().strftime('%Y%m%d')
                 school_detailed = self._get_school_detailed(notification)
-                logger.debug('Sending notification. Params: {}')
                 menu_array = self.api_client.get_menu(age=notification.age,
                                                       school=school_detailed,
                                                       menu_date=today_api_format)
@@ -76,9 +67,6 @@ class ProcessSubscriptions(object):
         return user.notification.school is not None and user.notification.age is not None
 
 
-sub = ProcessSubscriptions()
-
-
-@app.task
-def process_subscriptions():
+if __name__ == '__main__':
+    sub = ProcessSubscriptions()
     sub.send_notifications()

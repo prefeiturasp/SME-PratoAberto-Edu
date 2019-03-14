@@ -4,13 +4,16 @@ services:
 
   bot_webhook:
     build: .
-    command: gunicorn webhooks:app --timeout 120 --log-level DEBUG -w 1 -b 0.0.0.0:8002
+    command: gunicorn webhooks:app --timeout 120 --log-level DEBUG -w 4 -b 0.0.0.0:8002
     volumes:
-      - .:/code
+      - ./cron/cron_subscription:/etc/crontabs/root
     env_file:
       - .env
     ports:
-      - 3000:8002  # acessar localhost:8002/[facebook|telegram] para ativar o webhook
+      # ssh -R 80:localhost:3000 serveo.net
+      # acessar localhost:3000/[facebook|telegram] para ativar o webhook
+      # ou alguma url provida pelo serveo.net
+      - 3000:8002
 
 networks:
   default:
