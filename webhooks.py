@@ -3,11 +3,13 @@ import os
 from http import HTTPStatus
 
 from flask import Flask, request
+from mongoengine import (connect)
 
 from chatbots.edubot import EduBot
 from chatbots.utils import validate_payload
 
 app = Flask(__name__)
+connect(host=os.environ.get('MONGO_HOST'))
 
 
 def process_message_task(platform, msg_request):
@@ -15,9 +17,6 @@ def process_message_task(platform, msg_request):
     if validate_payload(payload, platform):
         bt = EduBot(payload=payload, platform=platform)
         bt.process_flow()
-    else:
-        # app.logger.debug('Payload inválido para {}: {}'.format(platform, payload))
-        pass
 
 
 @app.route('/telegram', methods=['POST'])
@@ -38,4 +37,4 @@ def facebook():
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0', port=3000)
