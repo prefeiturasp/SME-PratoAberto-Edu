@@ -9,6 +9,24 @@ from chatbots.model.bot_model import BotDbConnection
 from .utils import edu_logger
 
 
+class TelegramNotification(object):
+    def __init__(self, user_data):
+        TG_URL = 'https://api.telegram.org/bot{}/'.format(os.environ.get('TG_TOKEN'))
+        self.TG_BASE_MESSAGE_URL = TG_URL + 'sendMessage?chat_id={}&text={}&parse_mode=Markdown'
+        self.chat_id = user_data.platform_id
+
+    def send_notification_message(self, text):
+        """
+        :param text:
+        :return:
+        """
+        text = urllib.parse.quote_plus(text)
+        url = self.TG_BASE_MESSAGE_URL.format(self.chat_id, text)
+        r = requests.get(url)
+        edu_logger.debug('telegram send_notification_message: {}'.format(url))
+        edu_logger.debug('return: {}-{}'.format(r.status_code, r.text))
+
+
 class TelegramBot(BaseBot):
     """
         Handle data related to telegram.
