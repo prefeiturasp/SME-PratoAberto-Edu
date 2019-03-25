@@ -184,24 +184,26 @@ class EduBot(object):
                                                   school=school_detailed)
             if menu_array:
                 if has_buttons:
-                    self._print_menu(menu_array, has_buttons)
+                    self._print_menu(menu_array, has_buttons, school_meals=school_detailed['refeicoes'])
                 else:
-                    self._print_menu(menu_array)
+                    self._print_menu(menu_array, school_meals=school_detailed['refeicoes'])
             else:
                 self.bot.send_message('Não foi encontrado cardápio para o dia pesquisado, desculpe.')
 
-    def _print_menu(self, menu, has_buttons=False):
+    def _print_menu(self, menu, has_buttons=False, school_meals=[]):
+        # XXX: because of poor REST API
         menu_str = ''
         buttons = []
         meals = menu[0]['cardapio']
         for meal in meals:
-            menu_with_meal = ''
-            menu_str += '{}:\n'.format(meal)
-            menu_with_meal += '{}:\n'.format(meal)
-            for food in meals[meal]:
-                menu_str += '- {}\n'.format(food)
-                menu_with_meal += '- {}\n'.format(food)
-            buttons.append(menu_with_meal)
+            if meal in school_meals:
+                menu_with_meal = ''
+                menu_str += '{}:\n'.format(meal)
+                menu_with_meal += '{}:\n'.format(meal)
+                for food in meals[meal]:
+                    menu_str += '- {}\n'.format(food)
+                    menu_with_meal += '- {}\n'.format(food)
+                buttons.append(menu_with_meal)
         if has_buttons:
             self.bot.send_message('Qual refeição?', buttons)
         else:
