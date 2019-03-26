@@ -91,6 +91,13 @@ class BotDbConnection(object):
             user.save()
         return user
 
+    def cancel_notification(self):
+        user = self._get_user()
+        if user:
+            user.notification = None
+            user.save()
+        return user
+
     def save_evaluation(self):
         user = self._get_user()
         if user:

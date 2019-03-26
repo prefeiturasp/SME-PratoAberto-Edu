@@ -81,6 +81,8 @@ class EduBot(object):
             self._flow_evaluate_meal(step)
         elif flow_name == BotFlowEnum.RECEBER_NOTIFICACAO.value:
             self._flow_meal_alert(step)
+        elif flow_name == BotFlowEnum.CANCELAR_NOTIFICACAO.value:
+            self._flow_cancel_meal_alert(step)
 
     #
     # Private
@@ -158,6 +160,11 @@ class EduBot(object):
             else:
                 self._school_selected_get_ages()
 
+    def _flow_cancel_meal_alert(self, step):
+        self.bot.cancel_notification()
+        self.bot.send_message('Sua notificação cancelada!')
+        self._main_menu()
+
     # commons
 
     def _is_valid_flow(self, user_data):
@@ -213,7 +220,8 @@ class EduBot(object):
         self.bot.send_message('Bem vindo ao EduBot! Por favor, escolha uma das opções',
                               [BotFlowEnum.QUAL_CARDAPIO.value,
                                BotFlowEnum.AVALIAR_REFEICAO.value,
-                               BotFlowEnum.RECEBER_NOTIFICACAO.value])
+                               BotFlowEnum.RECEBER_NOTIFICACAO.value,
+                               BotFlowEnum.CANCELAR_NOTIFICACAO.value])
 
     def _is_age_option(self, opt):
         if opt in self.ages_opts:
