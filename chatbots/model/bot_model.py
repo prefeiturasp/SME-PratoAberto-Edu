@@ -1,7 +1,6 @@
 import json
-import os
 
-from mongoengine import (connect, EmbeddedDocument, DateTimeField,
+from mongoengine import (EmbeddedDocument, DateTimeField,
                          StringField, BooleanField, IntField, Document,
                          EmbeddedDocumentField, ListField)
 
@@ -43,9 +42,11 @@ class UserData(Document):
     notification = EmbeddedDocumentField(Notification, required=False)
     evaluations = ListField(EmbeddedDocumentField(Evaluation))
 
+    def __repr__(self):
+        return '{} - {}'.format(self.name, self.platform)
+
 
 class BotDbConnection(object):
-    connect(host=os.environ.get('MONGO_HOST'))
 
     def __init__(self, platform_id, platform, **kwargs):
         self.platform_id = platform_id
@@ -87,6 +88,13 @@ class BotDbConnection(object):
         if user:
             user.notification = Notification(school=user.flow_control.school,
                                              age=user.flow_control.age)
+            user.save()
+        return user
+
+    def cancel_notification(self):
+        user = self._get_user()
+        if user:
+            user.notification = None
             user.save()
         return user
 

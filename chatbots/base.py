@@ -16,6 +16,9 @@ class BaseBot(object):
     def save_notification(self):
         self.user_conn.save_notification()
 
+    def cancel_notification(self):
+        self.user_conn.cancel_notification()
+
     def update_flow_data(self, **kwargs):
         self.user_conn.update_flow_control(**kwargs)
 

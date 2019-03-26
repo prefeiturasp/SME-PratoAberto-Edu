@@ -81,6 +81,8 @@ class EduBot(object):
             self._flow_evaluate_meal(step)
         elif flow_name == BotFlowEnum.RECEBER_NOTIFICACAO.value:
             self._flow_meal_alert(step)
+        elif flow_name == BotFlowEnum.CANCELAR_NOTIFICACAO.value:
+            self._flow_cancel_meal_alert(step)
 
     #
     # Private
@@ -158,6 +160,11 @@ class EduBot(object):
             else:
                 self._school_selected_get_ages()
 
+    def _flow_cancel_meal_alert(self, step):
+        self.bot.cancel_notification()
+        self.bot.send_message('Sua notificação cancelada!')
+        self._main_menu()
+
     # commons
 
     def _is_valid_flow(self, user_data):
@@ -184,24 +191,26 @@ class EduBot(object):
                                                   school=school_detailed)
             if menu_array:
                 if has_buttons:
-                    self._print_menu(menu_array, has_buttons)
+                    self._print_menu(menu_array, has_buttons, school_meals=school_detailed['refeicoes'])
                 else:
-                    self._print_menu(menu_array)
+                    self._print_menu(menu_array, school_meals=school_detailed['refeicoes'])
             else:
                 self.bot.send_message('Não foi encontrado cardápio para o dia pesquisado, desculpe.')
 
-    def _print_menu(self, menu, has_buttons=False):
+    def _print_menu(self, menu, has_buttons=False, school_meals=[]):
+        # XXX: because of poor REST API
         menu_str = ''
         buttons = []
         meals = menu[0]['cardapio']
         for meal in meals:
-            menu_with_meal = ''
-            menu_str += '{}:\n'.format(meal)
-            menu_with_meal += '{}:\n'.format(meal)
-            for food in meals[meal]:
-                menu_str += '- {}\n'.format(food)
-                menu_with_meal += '- {}\n'.format(food)
-            buttons.append(menu_with_meal)
+            if meal in school_meals:
+                menu_with_meal = ''
+                menu_str += '{}:\n'.format(meal)
+                menu_with_meal += '{}:\n'.format(meal)
+                for food in meals[meal]:
+                    menu_str += '- {}\n'.format(food)
+                    menu_with_meal += '- {}\n'.format(food)
+                buttons.append(menu_with_meal)
         if has_buttons:
             self.bot.send_message('Qual refeição?', buttons)
         else:
@@ -211,7 +220,8 @@ class EduBot(object):
         self.bot.send_message('Bem vindo ao EduBot! Por favor, escolha uma das opções',
                               [BotFlowEnum.QUAL_CARDAPIO.value,
                                BotFlowEnum.AVALIAR_REFEICAO.value,
-                               BotFlowEnum.RECEBER_NOTIFICACAO.value])
+                               BotFlowEnum.RECEBER_NOTIFICACAO.value,
+                               BotFlowEnum.CANCELAR_NOTIFICACAO.value])
 
     def _is_age_option(self, opt):
         if opt in self.ages_opts:

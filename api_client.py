@@ -41,7 +41,7 @@ class PratoAbertoApiClient(object):
     def get_menu(self, age, menu_date, school):
         """
         :param age: str
-        :param menu_date: str
+        :param menu_date: str YYYYMMDD
         :param school: dict
         :return: array with menu data
         """

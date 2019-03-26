@@ -7,6 +7,28 @@ from chatbots.model.bot_model import BotDbConnection
 from .utils import edu_logger
 
 
+class FacebookNotification(object):
+    def __init__(self, user_data):
+        self.FB_URL = 'https://graph.facebook.com/v2.6/me/messages/' \
+                      '?access_token={}'.format(os.environ.get('FB_TOKEN'))
+        self.chat_id = user_data.platform_id
+
+    def send_notification_message(self, text):
+        """
+        :param text:
+        :return:
+        """
+        payload = {
+            'recipient': {'id': self.chat_id},
+            'message': {
+                'text': text}}
+
+        r = requests.post(self.FB_URL, json=payload)
+        edu_logger.debug('facebook send_notification_message: {}'.format(payload))
+        edu_logger.debug('return: {}-{}'.format(r.status_code, r.text))
+        return r.json()
+
+
 class FacebookBot(BaseBot):
     """
         Handle data related to facebook.
@@ -15,7 +37,8 @@ class FacebookBot(BaseBot):
 
     def __init__(self, payload):
         super().__init__(payload)
-        self.FB_URL = 'https://graph.facebook.com/v2.6/me/messages/?access_token={}'.format(os.environ.get('FB_TOKEN'))
+        self.FB_URL = 'https://graph.facebook.com/v2.6/me/messages/' \
+                      '?access_token={}'.format(os.environ.get('FB_TOKEN'))
         messaging = payload['entry'][0]['messaging'][0]
         self.chat_id = messaging['sender']['id']
         try:

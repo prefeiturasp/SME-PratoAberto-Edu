@@ -1,0 +1,2 @@
+# at 7:30
+30 7 * * *  python /code/subscriptions.py
