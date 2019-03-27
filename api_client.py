@@ -82,6 +82,6 @@ class PratoAbertoApiClient(object):
         return ages_list
 
     def _base_request(self, url):
+        edu_logger.debug('Requisição API: {}'.format(url))
         r = requests.get(url, headers=self.headers)
-        edu_logger.debug('url: {}'.format(url))
         return r.json()
