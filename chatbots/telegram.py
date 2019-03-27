@@ -37,11 +37,12 @@ class TelegramBot(BaseBot):
         super().__init__(payload)
         TG_URL = 'https://api.telegram.org/bot{}/'.format(os.environ.get('TG_TOKEN'))
         self.TG_BASE_MESSAGE_URL = TG_URL + 'sendMessage?chat_id={}&text={}&parse_mode=Markdown'
-        self.chat_id = payload['message']['chat']['id']
+        chat_data = payload['message']['chat']
+        self.chat_id = chat_data['id']
         self.text = payload['message']['text'].strip()
-        self.chat_name = payload['message']['chat']['first_name']
-        self.last_name = payload['message']['chat']['last_name']
-        self.username = payload['message']['chat']['username']
+        self.chat_name = chat_data['first_name']
+        self.last_name = chat_data['last_name']
+        self.username = chat_data.get('username', '')
         self.user_conn = BotDbConnection(self.chat_id, 'telegram',
                                          name=self.chat_name,
                                          last_name=self.last_name,
