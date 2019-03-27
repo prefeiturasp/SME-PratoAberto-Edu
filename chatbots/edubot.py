@@ -184,7 +184,11 @@ class EduBot(object):
         timestamp = str(flow_control['menu_date']['$date'])[:10]
         menu_date = datetime.datetime.utcfromtimestamp(int(timestamp)).strftime('%Y%m%d')
         school_name = flow_control['school']
-        school = self.api_client.get_schools_by_name(school_name)[0]
+        schools = self.api_client.get_schools_by_name(school_name)
+        if not schools:
+            self.bot.send_message('Não foi encontrado cardápio para o dia pesquisado, desculpe.')
+            self._main_menu()
+        school = schools[0]
         if school:
             school_detailed = self.api_client.get_school_by_eol_code(school['_id'])
             menu_array = self.api_client.get_menu(age=flow_control['age'],
