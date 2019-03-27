@@ -35,7 +35,8 @@ class BaseBot(object):
         """if text is equal to initial statuses, them back to begin."""
         if self.text in [BotFlowEnum.QUAL_CARDAPIO.value,
                          BotFlowEnum.AVALIAR_REFEICAO.value,
-                         BotFlowEnum.RECEBER_NOTIFICACAO.value]:
+                         BotFlowEnum.RECEBER_NOTIFICACAO.value,
+                         BotFlowEnum.CANCELAR_NOTIFICACAO.value]:
             self._reset_flow(self.text)
 
     def _reset_flow(self, text):
