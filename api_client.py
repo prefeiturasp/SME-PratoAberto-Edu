@@ -1,10 +1,9 @@
-import logging
 import os
 from urllib.parse import urlencode, urljoin
 
 import requests
 
-log = logging.getLogger(__name__)
+from chatbots.utils import edu_logger
 
 
 def url_join_with_params(base, url, params):
@@ -84,5 +83,5 @@ class PratoAbertoApiClient(object):
 
     def _base_request(self, url):
         r = requests.get(url, headers=self.headers)
-        log.debug('url: {}'.format(url))
+        edu_logger.debug('url: {}'.format(url))
         return r.json()
