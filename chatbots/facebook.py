@@ -84,11 +84,10 @@ class FacebookBot(BaseBot):
         https://developers.facebook.com/docs/messenger-platform/reference/buttons/postback
         https://stackoverflow.com/questions/37848437/any-way-around-facebook-bots-button-template-limit
         """
-        len_elements = math.ceil(float(len(keyboard_opts))/3.0)
         elements = []
-        for i in range(1, len_elements+1, 3):
+        for texts in self._chunks(keyboard_opts, 3):
             buttons = []
-            for text_option in keyboard_opts[:i]:  # 0...3, 4...6, 7...9
+            for text_option in texts:
                 buttons.append({
                     "type": "postback",
                     "title": text_option[:80],
