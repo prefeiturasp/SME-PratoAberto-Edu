@@ -1,7 +1,7 @@
 import os
 
 import requests
-
+import math
 from chatbots.base import BaseBot
 from chatbots.model.bot_model import BotDbConnection
 from .utils import edu_logger
@@ -73,25 +73,36 @@ class FacebookBot(BaseBot):
     # Private
     #
 
+    def _chunks(self, l, n):
+        """Yield successive n-sized chunks from l."""
+        for i in range(0, len(l), n):
+            yield l[i:i + n]
+
     def _concat_buttons(self, text, keyboard_opts):
         """
         https://developers.facebook.com/docs/messenger-platform/reference/webhook-events/messaging_postbacks
         https://developers.facebook.com/docs/messenger-platform/reference/buttons/postback
+        https://stackoverflow.com/questions/37848437/any-way-around-facebook-bots-button-template-limit
         """
-        buttons = []
-        for text_option in keyboard_opts[:3]:  # max of 3 buttons
-            buttons.append({
-                "type": "postback",
-                "title": text_option[:80],
-                "payload": text_option
-            })
+        len_elements = math.ceil(float(len(keyboard_opts))/3.0)
+        elements = []
+        for i in range(1, len_elements+1, 3):
+            buttons = []
+            for text_option in keyboard_opts[:i]:  # 0...3, 4...6, 7...9
+                buttons.append({
+                    "type": "postback",
+                    "title": text_option[:80],
+                    "payload": text_option
+                })
+            element = {'title': text,
+                       'buttons': buttons}
+            elements.append(element)
         message = {
             "attachment": {
                 "type": "template",
                 "payload": {
-                    "template_type": "button",
-                    "text": text,
-                    "buttons": buttons
+                    "template_type": "generic",
+                    "elements": elements
                 }
             }
         }
