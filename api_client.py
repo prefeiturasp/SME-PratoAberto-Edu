@@ -46,10 +46,13 @@ class PratoAbertoApiClient(object):
         """
         query_args = {
             'tipo_unidade': school['tipo_unidade'],
-            'tipo_atendimento': school['tipo_atendimento'],
             'agrupamento': school['agrupamento'],
             'idade': age
         }
+        tp_atendimento = school.get('tipo_atendimento', None)
+        if tp_atendimento:
+            query_args['tipo_atendimento'] = tp_atendimento
+
         url = '{}/cardapios/'.format(self.API_URL)
         url = url_join_with_params(base=url, url=menu_date, params=query_args)
         return self._base_request(url)
@@ -77,7 +80,7 @@ class PratoAbertoApiClient(object):
             for i in retval:
                 if i['idade'] not in ages_list:
                     ages_list.append(i['idade'])
-        except IndexError as e:
+        except (IndexError, TypeError) as e:
             pass
         return ages_list
 
