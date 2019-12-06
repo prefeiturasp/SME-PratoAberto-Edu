@@ -5,6 +5,7 @@ services:
   bot_webhook:
     build: .
     command: gunicorn webhooks:app --timeout 120 --log-level DEBUG -w 4 -b 0.0.0.0:8002
+    restart: always
     env_file:
       - .env
 
